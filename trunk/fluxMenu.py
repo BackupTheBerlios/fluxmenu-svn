@@ -459,7 +459,7 @@ class appgui:
         dialog.set_default_response(gtk.RESPONSE_CANCEL)
 
         filter.add_pattern("*.xpm")
-        if !useOnlyXpm:
+        if not useOnlyXpm:
             filter.add_pattern("*.png")
             filter.add_pattern("*.jpg")
             filter.add_pattern("*.jpeg")
