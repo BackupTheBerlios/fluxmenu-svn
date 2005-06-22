@@ -169,6 +169,7 @@ class appgui:
                    "on_preferencesbutton_clicked":self.preferences_dialog,
                    
                    "on_commandbutton_clicked":self.commandbutton_clicked,
+                   "on_icon_clicked":self.icon_clicked,
  
                    "on_typebox_changed":self.typebox_changed,
                    "on_treeview1_cursor_changed":self.treeview_changed,
@@ -441,15 +442,46 @@ class appgui:
         return
 
 
-#    def icon_clicked(self,widget):
+    def icon_clicked(self,widget):
 #        windowname2 = "dialog1"
 #        gladefile = "project1.glade"
 #        self.wTree2 = gtk.glade.XML(gladefile, windowname2)
 
-
-    def commandbutton_clicked(self, widget):
         filter = gtk.FileFilter()
 
+        dialogTitle = "Choose an icon (temporary selector)..."
+        dialogType = gtk.FILE_CHOOSER_ACTION_OPEN
+
+        dialog = gtk.FileChooserDialog(dialogTitle,
+                                        self.window, dialogType,
+                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dialog.set_default_response(gtk.RESPONSE_CANCEL)
+
+        filter.add_pattern("*.xpm")
+        if !useOnlyXpm:
+            filter.add_pattern("*.png")
+            filter.add_pattern("*.jpg")
+            filter.add_pattern("*.jpeg")
+
+        dialog.add_filter(filter)
+
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            # got an icon, proceed to attach it
+            self.iconIcon.set_from_file(dialog.get_filename())
+            treeselection = self.treeview.get_selection()
+            (model, iter) = treeselection.get_selected()
+            model.set_value(iter, 2, dialog.get_filename())
+            dialog.destroy()
+        elif response == gtk.RESPONSE_CANCEL:
+            #print 'Closed, no files selected'
+            dialog.destroy()
+
+        return
+
+
+    def commandbutton_clicked(self, widget):
 
         # Check whether it should be "select file" or "select folder" -dialog
         model = self.typeBox.get_model()

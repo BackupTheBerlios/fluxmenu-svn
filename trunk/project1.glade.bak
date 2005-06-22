@@ -712,8 +712,8 @@
 					  <child>
 					    <widget class="GtkImage" id="icon">
 					      <property name="visible">True</property>
-					      <property name="stock">gtk-no</property>
-					      <property name="icon_size">6</property>
+					      <property name="stock">gtk-execute</property>
+					      <property name="icon_size">4</property>
 					      <property name="xalign">0.5</property>
 					      <property name="yalign">0.5</property>
 					      <property name="xpad">0</property>
@@ -1401,6 +1401,7 @@ Press Cancel to abort.</property>
 				  <property name="active">True</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <signal name="toggled" handler="on_checkbutton2_toggled" last_modification_time="Wed, 01 Jun 2005 08:35:22 GMT"/>
 				</widget>
 				<packing>
 				  <property name="padding">0</property>
@@ -1570,6 +1571,7 @@ Press Cancel to abort.</property>
 				  <property name="active">True</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <signal name="toggled" handler="on_checkbutton6_toggled" last_modification_time="Wed, 01 Jun 2005 08:35:28 GMT"/>
 				</widget>
 				<packing>
 				  <property name="padding">0</property>
