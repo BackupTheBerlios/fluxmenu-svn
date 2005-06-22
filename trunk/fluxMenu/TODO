@@ -1,0 +1,28 @@
+TODO:
+
+* Fix the drag 'n' drop so that dropping over items (anything but submenu or begin)
+  wouldn't be possible (needs to write some kind of copy_tree -function)
+
+* Make the icon-button to work and also change the default icon (it is ugly and does
+  not tell what the button is)
+
+* Fix the Edit -> Undo -thingy
+
+* Do the configuration-dialog and make it possible to save it and load on program start
+
+* Menu and submenu sorting (by name?)
+
+* Separator to show up as a line instead of blank  <= I tried the treeview's separator,
+  it is no good because it cannot be selected. All separators would then be very static.
+
+* Icons next to name in treeview
+
+* Help -> About and all its subdialogs
+
+* Maybe a little smarter default menu on File -> New
+
+* Menu generation for debian, my own generator? and calling external generator.
+
+* A context menu for right mouse button on treeview, to show things like "delete" and "add->exec"?
+
+* Bugfixes :D
