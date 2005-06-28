@@ -174,6 +174,7 @@ class appgui:
                    "on_typebox_changed":self.typebox_changed,
                    "on_treeview1_cursor_changed":self.treeview_changed,
                    "on_info_changed":self.info_changed,
+                   "on_about1_activate":self.about1_activate,
                    "on_quit1_activate":(gtk.main_quit),
                    "on_quit_clicked":(gtk.main_quit),
                    "on_window1_destroy":(gtk.main_quit)}
@@ -611,10 +612,12 @@ class appgui:
 
         return
 
-#    def about1_activate(self,widget):
-#        windowname2="window2"
-#        gladefile="project3.glade"
-#        self.wTree2=gtk.glade.XML (gladefile,windowname2)
+    def about1_activate(self,widget):
+        #for the logo to show when its complete you need to edit the project1.glade
+        #file manually and add the full path of where the icon will be installed.
+        windowname2="aboutdialog1"
+        gladefile="project1.glade"
+        self.wTree2=gtk.glade.XML (gladefile,windowname2)
 
     def change_labels(self, nameIndex):
         self.nameLabel.set_text(itemInfoCaptions[nameIndex][0])
@@ -710,33 +713,100 @@ class appgui:
         self.wTree2 = gtk.glade.XML(gladefile, window2)
 
         # Messagehandlers for this window
-        handler = {"on_checkbutton2_toggle":self.original_toggled,
-                   "on_checkbutton6_toggle":self.icon_toggled,
+        handler = {"on_checkbutton2_toggled":self.original_toggled,
+                   "on_checkbutton7_toggled":self.icon_toggled,
+                   "on_radiobutton6_toggled":self.external_toggled,
                    "on_okbutton2_clicked":self.preferences_ok,
-                   "on_cancelbutton2_clicked":self.preferences_cancel}
+                   "on_cancelbutton2_clicked":self.preferences_cancel,
+                   "on_preferences_destroy":self.preferences_cancel}
+
 
         self.wTree2.signal_autoconnect(handler)
 
+        self.fill_preferences()
+
         return
 
+# These functions are very quick'n'dirty, but I will fix them later
+# When I move this whole dialog to another file.
+# I just have to get this to work now.
+
+    def fill_preferences(self):
+        self.wTree2.get_widget("checkbutton2").set_active(saveOriginal)
+        self.wTree2.get_widget("checkbutton3").set_active(not overwriteOriginal)
+        self.wTree2.get_widget("checkbutton4").set_active(saveBackup)
+        self.wTree2.get_widget("checkbutton5").set_active(saveBackupBeforeGenerating)
+        self.wTree2.get_widget("checkbutton6").set_active(deleteBackup)
+
+        self.wTree2.get_widget("checkbutton7").set_active(useIcons)
+        self.wTree2.get_widget("checkbutton8").set_active(useOnlyXpm)
+
+#        iconPaths = ['/usr/share/icons/',
+#             '~/.icons/']
+
+        self.wTree2.get_widget("radiobutton4").set_active(generateDebian)
+        self.wTree2.get_widget("radiobutton5").set_active(generateDefault)
+        self.wTree2.get_widget("radiobutton6").set_active(generateExternal)
+        self.wTree2.get_widget("generatorentry").set_text(externalGenerator)
+
+        return
+
+# This does not work
+# Does not read values to global variables.
+    def get_preferences(self):
+        saveOriginal = self.wTree2.get_widget("checkbutton2").get_active()
+        overWriteOriginal = not self.wTree2.get_widget("checkbutton3").get_active()
+        saveBackup = self.wTree2.get_widget("checkbutton4").get_active()
+        saveBackupBeforeGenerating = self.wTree2.get_widget("checkbutton5").get_active()
+        deleteBackup = self.wTree2.get_widget("checkbutton6").get_active()
+
+        useIcons = self.wTree2.get_widget("checkbutton7").get_active()
+        useOnlyXpm = self.wTree2.get_widget("checkbutton8").get_active()
+
+#        iconPaths = ['/usr/share/icons/',
+#             '~/.icons/']
+
+        generateDebian = self.wTree2.get_widget("radiobutton4").get_active()
+        generateDefault = self.wTree2.get_widget("radiobutton5").get_active()
+        generateExternal = self.wTree2.get_widget("radiobutton6").get_active()
+        externalGenerator = self.wTree2.get_widget("generatorentry").get_text()
+
+        return
+
+
     def original_toggled(self, widget):
-        self.wTree2.get_widget("checkbutton5").set_sensitive(self.wTree2.get_widget("checkbutton2").get_value())
+        self.wTree2.get_widget("checkbutton3").set_sensitive(self.wTree2.get_widget("checkbutton2").get_active())
         return
 
     def icon_toggled(self, widget):
-        print "Shit"
-        self.wTree2.get_widget("checkbutton5").set_sensitive(self.wTree2.get_widget("checkbutton2").get_value())
+        self.wTree2.get_widget("checkbutton8").set_sensitive(self.wTree2.get_widget("checkbutton7").get_active())
+        return
+
+    def external_toggled(self, widget):
+        self.wTree2.get_widget("generatorlabel").set_sensitive(self.wTree2.get_widget("radiobutton6").get_active())
+        self.wTree2.get_widget("generatorentry").set_sensitive(self.wTree2.get_widget("radiobutton6").get_active())
+        self.wTree2.get_widget("generatorbutton").set_sensitive(self.wTree2.get_widget("radiobutton6").get_active())
         return
 
     def preferences_ok(self, widget):
+        self.get_preferences()
+        print saveOriginal, externalGenerator
+#        self.save_preferencese(expanduser('~/.fluxbox/fluxMenu'))
         self.wTree2.get_widget("preferences").destroy()
         return
 
     def preferences_cancel(self, widget):
         self.wTree2.get_widget("preferences").destroy()
         return
-        
 
+
+# Main program starts here
+# First load default options
+# ... load 'em ....
+
+# Launch the app
 app=appgui()
-gtk.main()   
+gtk.main()
 
+# If backup should be deleted on quit, do it here
+# ... delete backup ...
