@@ -56,6 +56,7 @@ from os.path import isfile,expanduser
 
 import handleMenu
 import findIcons
+import preferences
 
 #now we have both gtk and gtk.glade imported
 #Also, we know we are running GTK v2
@@ -167,6 +168,7 @@ class appgui:
                    "on_itembutton_clicked":self.create_item,
                    "on_separatorbutton_clicked":self.create_separator,
                    "on_preferencesbutton_clicked":self.preferences_dialog,
+                   "on_preferences1_activate":self.preferences_dialog,
                    
                    "on_commandbutton_clicked":self.commandbutton_clicked,
                    "on_icon_clicked":self.icon_clicked,
@@ -305,7 +307,7 @@ class appgui:
             self.fill_treeview(menu)
             self.window.set_title(self.menuFile + ' - ' + windowTitle)
             dialog.destroy()
-        elif response == gtk.RESPONSE_CANCEL:
+        else:
             #print 'Closed, no files selected'
             dialog.destroy()
 
@@ -360,17 +362,23 @@ class appgui:
 
 
     def undo_clicked(self, widget):
-        # Copy menu.bck over menu and reload it.
-        # TODO: Fix this.
-        if not isfile(self.menuFile + '.bck'): return
-        try:
-            shutil.copyfile(self.menuFile + '.bck', self.menuFile)
-        except:
-            return
-        
-        self.treeview.get_model().clear()
-        menu = handleMenu.read_menu(dialog.get_filename())
-        self.fill_treeview(menu)
+        # Loads the menu.bck, so reverts to last saved backup
+        if saveBackup:
+            if isfile(self.menuFile + '.bck'):
+                self.treeview.get_model().clear()
+                menu = handleMenu.read_menu(self.menuFile + '.bck')
+                self.fill_treeview(menu)
+            else:
+                message = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_WARNING, gtk.BUTTONS_OK,
+                                             "Cannot revert to last backup: No backup-file (%s.bck)" %self.menuFile)
+                message.run()
+                message.destroy()
+        else:
+            message = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_WARNING, gtk.BUTTONS_OK,
+                                         "Cannot revert to last backup: Backups are not enabled")
+            message.run()
+            message.destroy()
+     
         return
 
 
@@ -727,6 +735,7 @@ class appgui:
 
         return
 
+
 # These functions are very quick'n'dirty, but I will fix them later
 # When I move this whole dialog to another file.
 # I just have to get this to work now.
@@ -741,8 +750,15 @@ class appgui:
         self.wTree2.get_widget("checkbutton7").set_active(useIcons)
         self.wTree2.get_widget("checkbutton8").set_active(useOnlyXpm)
 
-#        iconPaths = ['/usr/share/icons/',
-#             '~/.icons/']
+        self.pathList = self.wTree2.get_widget("treeview3")
+        self.pathstore = gtk.ListStore(str)
+        self.pathList.set_model(self.pathstore)
+        renderer = gtk.CellRendererText()
+        column = gtk.TreeViewColumn("Path", renderer, text=0)
+        self.pathList.append_column(column)
+
+        for path in iconPaths:
+            self.pathstore.append((path,))
 
         self.wTree2.get_widget("radiobutton4").set_active(generateDebian)
         self.wTree2.get_widget("radiobutton5").set_active(generateDefault)
@@ -751,9 +767,19 @@ class appgui:
 
         return
 
-# This does not work
-# Does not read values to global variables.
     def get_preferences(self):
+        global saveOriginal
+        global overWriteOriginal
+        global saveBackup
+        global saveBackupBeforeGenerating
+        global deleteBackup
+        global useIcons
+        global useOnlyXpm
+        global generateDebian
+        global generateDefault
+        global generateExternal
+        global externalGenerator
+
         saveOriginal = self.wTree2.get_widget("checkbutton2").get_active()
         overWriteOriginal = not self.wTree2.get_widget("checkbutton3").get_active()
         saveBackup = self.wTree2.get_widget("checkbutton4").get_active()
@@ -790,7 +816,6 @@ class appgui:
 
     def preferences_ok(self, widget):
         self.get_preferences()
-        print saveOriginal, externalGenerator
 #        self.save_preferencese(expanduser('~/.fluxbox/fluxMenu'))
         self.wTree2.get_widget("preferences").destroy()
         return
