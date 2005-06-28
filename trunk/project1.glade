@@ -1353,7 +1353,7 @@ his work is released
 under the Creative Commons
 http://creativecommons.org/licenses/by-sa/2.0/</property>
   <property name="translator_credits" translatable="yes" comments="TRANSLATORS: Replace this string with your names, one name per line.">translator-credits</property>
-  <property name="logo">mini-fluxbox5.png</property>
+  <property name="logo">pixmaps/mini-fluxbox5.png</property>
 </widget>
 
 <widget class="GtkWindow" id="preferences">
