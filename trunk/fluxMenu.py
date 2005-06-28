@@ -56,7 +56,7 @@ from os.path import isfile,expanduser
 
 import handleMenu
 import findIcons
-import preferences
+#import preferences
 
 #now we have both gtk and gtk.glade imported
 #Also, we know we are running GTK v2
