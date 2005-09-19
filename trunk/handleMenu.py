@@ -65,10 +65,14 @@ def save_menu(menu, filename, overwrite, useIcons):
             intendation = intendation - 4
             if intendation < 0: intendation = 0
 
-        printString = '[' + menuline[0] + '] (' + menuline[1] + ') {' + menuline[2] + '}'
-	if useIcons:
+        printString = '[' + menuline[0] + ']'
+        if menuline[1]:
+            printString = printString + ' (' + menuline[1] + ')'
+        if menuline[2]:
+            printString = printString + ' {' + menuline[2] + '}'
+	if useIcons and menuline[3]:
             printString = printString + ' <' + menuline[3] + '>'
-        printString = printString + '\n'
+        printString = printString + '\r\n'
 
         printString = printString.rjust(intendation + len(printString))
 
