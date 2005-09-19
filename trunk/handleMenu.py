@@ -1,7 +1,6 @@
 import os,re,shutil,sys
 from os.path import expanduser, isfile
 
-
 # read_menu: Parses a fluxbox's menu-file
 # Input: menufile = string pointing to the menu, MUST be absolute
 #                   use expanduser etc BEFORE calling this.
@@ -46,11 +45,13 @@ def read_menu(menufile):
 #             NOTE: end-tag _MUST_ be inserted before calling this
 #        filename = filename where to save
 #        overwrite = if an existing menu should be overwritten
+#        useIcons = if icons should be saved or not
 # Output: 0 on general error
 #         1 if succesfull
 #         2 if file exists and overwrite is False
 
-def save_menu(menu, filename, overwrite):
+def save_menu(menu, filename, overwrite, useIcons):
+
     if isfile(filename) and not overwrite: return 2
 
     if not isfile(filename): return 0
@@ -64,7 +65,11 @@ def save_menu(menu, filename, overwrite):
             intendation = intendation - 4
             if intendation < 0: intendation = 0
 
-        printString = '[' + menuline[0] + '] (' + menuline[1] + ') {' + menuline[2] + '} <' + menuline[3] + '>\n'
+        printString = '[' + menuline[0] + '] (' + menuline[1] + ') {' + menuline[2] + '}'
+	if useIcons:
+            printString = printString + ' <' + menuline[3] + '>'
+        printString = printString + '\n'
+
         printString = printString.rjust(intendation + len(printString))
 
         cFile.write(printString)

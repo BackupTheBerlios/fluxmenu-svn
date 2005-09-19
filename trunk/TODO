@@ -4,8 +4,7 @@ TODO:
 * Fix the drag 'n' drop so that dropping over items (anything but submenu or begin)
   wouldn't be possible (needs to write some kind of copy_tree -function)
 
-* Make the icon-button to work and also change the default icon (it is ugly and does
-  not tell what the button is). It should bring an dialog showing preferred icons
+* Make the icon-selector dialog, that would show preferred icons
   (maybe using freedesktop's specs to find them?) and also all found icons in paths.
   I think the "all icons" could be sorted so that the ones that could be correct are
   first in the list. Like fbgm does the search...
@@ -16,9 +15,9 @@ TODO:
 
 * Menu and submenu sorting (by name?)
 
-* Separator to show up as a line instead of blank  <= I tried the treeview's separator,
+(* Separator to show up as a line instead of blank  <= I tried the treeview's separator,
   it is no good because it cannot be selected. All separators would then be very static.
-  IÃ'll stay with current "----" unless someone suggests anything better.
+  I'll stay with current "----" unless someone suggests anything better.)
 
 * Icons next to name in treeview.
 

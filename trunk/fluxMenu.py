@@ -52,11 +52,14 @@ except:
 
 import os
 import gobject
+import time
 from os.path import isfile,expanduser
 
 import handleMenu
 import findIcons
 #import preferences
+import selectIcon
+from selectIcon import selectIcon
 
 #now we have both gtk and gtk.glade imported
 #Also, we know we are running GTK v2
@@ -95,6 +98,7 @@ possibleItemTypes = [['exec', 'exec: Application', 0, 0xFF],
                      ['reconfig', 'reconfig: Reconfigure', 0, 0x0D],
                      ['restart', 'restart: Restart WM', 0, 0xFF],
                      ['config', 'config: Configuration menu', 0, 0x0D],
+                     ['commanddialog', 'commanddialog: Internal command', 0, 0x0D],
                      ['wallpaper', 'wallpaper: Wallpaper menu', 3, 0xFF],
                      ['workspaces', 'workspaces: List of workspaces', 0, 0x05],
                      ['begin', 'begin: Beginning of the menu (static)', 1, 0x01],
@@ -117,7 +121,8 @@ deleteBackup = True
 useIcons = True
 useOnlyXpm = False
 iconPaths = ['/usr/share/icons/',
-             '~/.icons/']
+             '~/.icons/',
+             '/usr/share/pixmaps/']
 generateDebian = False
 generateDefault = False
 generateExternal = True
@@ -147,6 +152,7 @@ class appgui:
         self.iconIcon = self.wTree.get_widget("icon")
         self.commandLabel = self.wTree.get_widget("commandlabel")
         self.errorLabel = self.wTree.get_widget("errorlabel")
+        self.tooltips = gtk.Tooltips()
 
         self.enable_fields(0x00)
 
@@ -292,12 +298,17 @@ class appgui:
                                         self.window ,gtk.FILE_CHOOSER_ACTION_OPEN,
                                         (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-        dialog.set_default_response(gtk.RESPONSE_CANCEL)
+        dialog.set_default_response(gtk.RESPONSE_OK)
 
         filter = gtk.FileFilter()
         filter.set_name("Fluxbox menu")
         filter.add_pattern("menu")
         dialog.add_filter(filter)
+
+        filter2 = gtk.FileFilter()
+        filter2.set_name("All Files")
+        filter2.add_pattern("*")
+        dialog.add_filter(filter2)
 
         response = dialog.run()
         if response == gtk.RESPONSE_OK:
@@ -322,7 +333,7 @@ class appgui:
             # Save a backup if it is enabled
             if saveBackup: handleMenu.backup_menu(self.menuFile, '.bck', True)
 
-            handleMenu.save_menu(menu, self.menuFile, True)
+            handleMenu.save_menu(menu, self.menuFile, True, useIcons)
         else:
             # Call save as -function to get the new filename
             print 'No menu-file'
@@ -354,7 +365,7 @@ class appgui:
                 self.menuFile = dialog.get_filename()
                 self.window.set_title(self.menuFile + ' - ' + windowTitle)
                 menu = self.serialize_menu()
-                handleMenu.save_menu(menu, self.menuFile, True)
+                handleMenu.save_menu(menu, self.menuFile, True, useIcons)
 
         dialog.destroy()
 
@@ -432,6 +443,8 @@ class appgui:
         # Select the item just created
         treeselection.select_iter(newIter)
 
+        self.treeview_changed(newIter)
+
         return
 
 
@@ -452,6 +465,10 @@ class appgui:
 
 
     def icon_clicked(self,widget):
+#	iconselector = selectIcon(useOnlyXpm)
+#        while not iconselector.ready_to_close():
+#            iconselector.ready_to_close()
+
 #        windowname2 = "dialog1"
 #        gladefile = "project1.glade"
 #        self.wTree2 = gtk.glade.XML(gladefile, windowname2)
@@ -465,7 +482,7 @@ class appgui:
                                         self.window, dialogType,
                                         (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-        dialog.set_default_response(gtk.RESPONSE_CANCEL)
+        dialog.set_default_response(gtk.RESPONSE_OK)
 
         filter.add_pattern("*.xpm")
         if not useOnlyXpm:
@@ -477,12 +494,19 @@ class appgui:
 
         response = dialog.run()
         if response == gtk.RESPONSE_OK:
-            # got an icon, proceed to attach it
-            self.iconIcon.set_from_file(dialog.get_filename())
-            treeselection = self.treeview.get_selection()
-            (model, iter) = treeselection.get_selected()
-            model.set_value(iter, 2, dialog.get_filename())
-            dialog.destroy()
+
+        # got an icon, proceed to attach it
+#        iconFile = iconselector.selected_icon()
+            iconFile = dialog.get_filename()
+            if iconFile and iconFile != "":
+                self.iconIcon.set_from_file(iconFile)
+                self.tooltips.set_tip(self.iconButton, iconFile)
+                treeselection = self.treeview.get_selection()
+                (model, iter) = treeselection.get_selected()
+                model.set_value(iter, 2, iconFile)
+                print model.get_value(iter, 2)
+
+                dialog.destroy()
         elif response == gtk.RESPONSE_CANCEL:
             #print 'Closed, no files selected'
             dialog.destroy()
@@ -598,8 +622,10 @@ class appgui:
                 iconFile = model.get_value(iter, 2)
                 if iconFile:
                     self.iconIcon.set_from_file(iconFile)
+                    self.tooltips.set_tip(self.iconButton, iconFile)
+
                 else:
-                    self.iconIcon.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_DIALOG)
+                    self.iconIcon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
 
                 # Disable toolbar if 'begin' is enabled
                 if type == 'begin': self.enable_toolbar(True, False)
