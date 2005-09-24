@@ -33,11 +33,11 @@ def read_menu(menufile):
             # Item's type is marked with [ and ]
             itemType = get_item(menuItem, '[', ']')
 
-            empty_match = re.compile(r'^[ 	]*^')
+            empty_match = re.compile(r'^[ 	]*$')
 
             # If the item is not a item, it possibly is just a line of text
             if itemType == '' and not empty_match.search(menuItem):
-                itemName = menuItem
+                itemName = menuItem.strip()
                 isComment = False
                 itemType = 'Comment'
                 itemCommand = ''
