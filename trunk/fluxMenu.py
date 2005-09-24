@@ -89,7 +89,7 @@ itemInfoCaptions = [['Name:', 'Command:', 1],
 
 possibleItemTypes = [['exec', 'exec: Application', 0, 0xFF],
                      ['exit', 'exit: Shutdown fluxbox', 0, 0x0D],
-                     ['include', 'include: Include another menu', 3, 0xFF],
+                     ['include', 'include: Include another menu', 3, 0x01],
                      ['nop', 'nop: No-operation', 0, 0x05],
                      ['separator', 'separator: Separator', 0, 0x04],
                      ['style', 'style: Style', 3, 0xFF],
@@ -149,6 +149,7 @@ class appgui:
         self.commandButton = self.wTree.get_widget("commandbutton")
         self.nameLabel = self.wTree.get_widget("namelabel")
         self.iconButton = self.wTree.get_widget("iconbutton")
+        self.clearIconButton = self.wTree.get_widget("clearicon")
         self.iconIcon = self.wTree.get_widget("icon")
         self.commandLabel = self.wTree.get_widget("commandlabel")
         self.errorLabel = self.wTree.get_widget("errorlabel")
@@ -178,6 +179,7 @@ class appgui:
                    
                    "on_commandbutton_clicked":self.commandbutton_clicked,
                    "on_icon_clicked":self.icon_clicked,
+                   "on_clearicon_clicked":self.clearicon_clicked,
  
                    "on_typebox_changed":self.typebox_changed,
                    "on_treeview1_cursor_changed":self.treeview_changed,
@@ -238,14 +240,20 @@ class appgui:
         self.treemodel=gtk.TreeStore(gobject.TYPE_STRING,
                                      gobject.TYPE_STRING,
                                      gobject.TYPE_STRING,
-                                     gobject.TYPE_STRING)
+                                     gobject.TYPE_STRING,
+                                     gobject.TYPE_BOOLEAN)
         self.treeview.set_model(self.treemodel)
 
         renderer=gtk.CellRendererText()
+        renderer2=gtk.CellRendererToggle()
+        renderer2.set_property("activatable", True)
+        renderer2.connect( 'toggled', self.visible_toggled, self.treemodel)
         column=gtk.TreeViewColumn("Item", renderer, text=0)
+        column2=gtk.TreeViewColumn("Visible", renderer2, active=4)
         column.set_resizable(True)
         self.treeview.append_column(column)
-
+        self.treeview.append_column(column2)
+        self.treeview.set_expander_column(column)
         return
 
 
@@ -254,19 +262,19 @@ class appgui:
         iter = None
         for item in menu:
             if(item[0].lower() == 'begin'):
-                iter = self.insert_row(model, None, item[1], item[2], item[3], item[0])
+                iter = self.insert_row(model, None, item[1], item[2], item[3], item[0], item[4])
             elif(item[0].lower() == 'submenu'):
                 if not iter: break
-                iter = self.insert_row(model, iter, item[1], item[2], item[3], item[0])
+                iter = self.insert_row(model, iter, item[1], item[2], item[3], item[0], item[4])
             elif(item[0].lower() == 'end'):
                 if not iter: break
                 iter = model.iter_parent(iter)
             elif(item[0].lower() == 'separator'):
                 if not iter: break
-                self.insert_row(model, iter, '--------', item[2], item[3], item[0])
+                self.insert_row(model, iter, '--------', item[2], item[3], item[0], item[4])
             else:
                 if not iter: break
-                self.insert_row(model, iter, item[1], item[2], item[3], item[0])
+                self.insert_row(model, iter, item[1], item[2], item[3], item[0], item[4])
 
         # Expand the root -level of the menu
         # Changing 2nd parameter to True will expand whole menu
@@ -414,18 +422,20 @@ class appgui:
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
         if model.get_value(iter, 3) == 'submenu' or model.get_value(iter, 3) == 'begin':
-            newIter = model.insert_after(iter, None, ['New submenu', '', '', 'submenu'])
+            newIter = model.insert_after(iter, None, ['New submenu', '', '', 'submenu', True])
             self.treeview.expand_row(model.get_path(iter), False)
         else:
-            newIter = model.insert_after(None, iter, ['New submenu', '', '', 'submenu'])
+            newIter = model.insert_after(None, iter, ['New submenu', '', '', 'submenu', True])
 
         # I don't know if this is a good option, but add one "new item" under 
         # the just created submenu
         # First select the submenu we created
         treeselection.select_iter(newIter)
+        self.treeview_changed(newIter)
+        self.nameEntry.grab_focus()
 
         # Then create a new item under that
-        model.insert_after(newIter, None, ['New item', '', '', 'exec'])
+        model.insert_after(newIter, None, ['New item', '', '', 'exec', True])
 
         return
 
@@ -435,15 +445,15 @@ class appgui:
         (model, iter) = treeselection.get_selected()
 
         if model.get_value(iter, 3) == 'submenu' or model.get_value(iter, 3) == 'begin':
-            newIter = model.prepend(iter, ['New item', '', '', 'exec'])
+            newIter = model.prepend(iter, ['New item', '', '', 'exec', True])
             self.treeview.expand_row(model.get_path(iter), False)
         else:
-            newIter = model.insert_after(model.iter_parent(iter), iter, ['New item', '', '', 'exec'])
+            newIter = model.insert_after(model.iter_parent(iter), iter, ['New item', '', '', 'exec', True])
 
         # Select the item just created
         treeselection.select_iter(newIter)
-
         self.treeview_changed(newIter)
+        self.nameEntry.grab_focus()
 
         return
 
@@ -453,13 +463,14 @@ class appgui:
         (model, iter) = treeselection.get_selected()
 
         if model.get_value(iter, 3) == 'submenu' or model.get_value(iter, 3) == 'begin':
-            newIter = model.prepend(iter, ['', '', '', 'separator'])
+            newIter = model.prepend(iter, ['', '', '', 'separator', True])
             self.treeview.expand_row(model.get_path(iter), False)
         else:
-            newIter = model.insert_after(model.iter_parent(iter), iter, ['', '', '', 'separator'])
+            newIter = model.insert_after(model.iter_parent(iter), iter, ['', '', '', 'separator', True])
        
         # Select the separator that was created
         treeselection.select_iter(newIter)
+        self.treeview_changed(newIter)
 
         return
 
@@ -504,7 +515,7 @@ class appgui:
                 treeselection = self.treeview.get_selection()
                 (model, iter) = treeselection.get_selected()
                 model.set_value(iter, 2, iconFile)
-                print model.get_value(iter, 2)
+#                print model.get_value(iter, 2)
 
                 dialog.destroy()
         elif response == gtk.RESPONSE_CANCEL:
@@ -512,6 +523,14 @@ class appgui:
             dialog.destroy()
 
         return
+
+    def clearicon_clicked(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        model.set_value(iter, 2, None)
+        self.iconIcon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
+        return
+
 
 
     def commandbutton_clicked(self, widget):
@@ -646,6 +665,10 @@ class appgui:
 
         return
 
+    def visible_toggled(self,widget, path, model):
+        self.treemodel[path][4] = not self.treemodel[path][4]
+        return
+
     def about1_activate(self,widget):
         #for the logo to show when its complete you need to edit the project1.glade
         #file manually and add the full path of where the icon will be installed.
@@ -658,12 +681,13 @@ class appgui:
         self.commandLabel.set_text(itemInfoCaptions[nameIndex][1])
         return
 
-    def insert_row(self, model, parent, first, second, third, fourth):
+    def insert_row(self, model, parent, first, second, third, fourth, fifth):
         myiter = model.insert_before(parent, None)
         model.set_value(myiter, 0, first)
         model.set_value(myiter, 1, second)
         model.set_value(myiter, 2, third)
         model.set_value(myiter, 3, fourth)
+        model.set_value(myiter, 4, fifth)
         return myiter
 
     def enable_fields(self, fields):
@@ -678,6 +702,12 @@ class appgui:
         self.typeLabel.set_sensitive(fields & 0x04)
 
         self.iconButton.set_sensitive(fields & 0x08)
+        self.clearIconButton.set_sensitive(fields & 0x08)
+
+        if not useIcons:
+            self.iconButton.set_sensitive(False)
+            self.clearIconButton.set_sensitive(False)
+
         return
 
 
@@ -700,16 +730,25 @@ class appgui:
         menu = []
 
         serializeMenu = True
+        parentVisible = True
         while serializeMenu:
             itemType = model.get_value(iter, 3)
             itemName = model.get_value(iter, 0)
             itemCommand = model.get_value(iter, 1)
             itemIcon = model.get_value(iter, 2)
+            
+            if parentVisible and model.get_value(iter, 4):
+                itemComment = True
+            else:
+                itemComment = False
 
-            menu.append([itemType, itemName, itemCommand, itemIcon])
+	    # TODO: Fix the comment-save
+            menu.append([itemType, itemName, itemCommand, itemIcon, itemComment])
 
             newIter = model.iter_children(iter)
-            if newIter: iter = newIter
+            if newIter:
+                if parentVisible: parentVisible = model.get_value(iter, 4)
+                iter = newIter
             else:
                 newIter = model.iter_next(iter)
                 if newIter: iter = newIter
@@ -727,7 +766,12 @@ class appgui:
                             goUp = False
                             serializeMenu = False
                         else:
-                            menu.append(['end', '', '', ''])
+                            menu.append(['end', '', '', '', parentVisible])
+
+                            parentParentIter = model.iter_parent(newIter)
+                            if parentParentIter:
+                                if not model.get_value(newIter, 4) and model.get_value(parentParentIter, 4):
+                                    parentVisible = True
 
                         # We do not want to parse same tree again
                         # So if there is no next item, will continue going up
@@ -749,6 +793,7 @@ class appgui:
         # Messagehandlers for this window
         handler = {"on_checkbutton2_toggled":self.original_toggled,
                    "on_checkbutton7_toggled":self.icon_toggled,
+                   "on_checkbutton8_toggled":self.xpm_toggled,
                    "on_radiobutton6_toggled":self.external_toggled,
                    "on_okbutton2_clicked":self.preferences_ok,
                    "on_cancelbutton2_clicked":self.preferences_cancel,
@@ -823,6 +868,9 @@ class appgui:
         generateExternal = self.wTree2.get_widget("radiobutton6").get_active()
         externalGenerator = self.wTree2.get_widget("generatorentry").get_text()
 
+        if not useIcons:
+            self.iconButton.set_sensitive(False)
+            self.clearIconButton.set_sensitive(False)
         return
 
 
@@ -832,7 +880,16 @@ class appgui:
 
     def icon_toggled(self, widget):
         self.wTree2.get_widget("checkbutton8").set_sensitive(self.wTree2.get_widget("checkbutton7").get_active())
+        if self.wTree2.get_widget("checkbutton7").get_active():
+            self.wTree2.get_widget("convertxpm").set_sensitive(self.wTree2.get_widget("checkbutton8").get_active())
+        else:
+            self.wTree2.get_widget("convertxpm").set_sensitive(False)
         return
+
+    def xpm_toggled(self, widget):
+        self.wTree2.get_widget("convertxpm").set_sensitive(self.wTree2.get_widget("checkbutton8").get_active())
+        return
+
 
     def external_toggled(self, widget):
         self.wTree2.get_widget("generatorlabel").set_sensitive(self.wTree2.get_widget("radiobutton6").get_active())

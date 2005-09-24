@@ -6,7 +6,7 @@ from os.path import expanduser, isfile
 #                   use expanduser etc BEFORE calling this.
 #                   And use SINGLE quotes!
 # Output: table containing the menu, 4 fields:
-#         [type] [name] [command] [icon]
+#         [type] [name] [command] [icon] [is-this-line-a-comment]
 # BUGS: Possibly parse failure if command, type or something contains
 #       characters [, ], {, }, (, ), <, or >
 
@@ -22,20 +22,37 @@ def read_menu(menufile):
         # Parse the file
         menu = []
         for menuItem in menuContents:
-            # TODO: Check for comments, save them... to... itemName, with
-            # itemType == Comment, ne?
+            # TODO: Check for comments, save them as 4th field in the menu... 
+            # then I can implement a "display in menu" -field :)
+
+            match = re.compile(r'^[ 	]*[#!]+')
+            isComment = False
+            if match.search(menuItem):
+                isComment = True
 
             # Item's type is marked with [ and ]
             itemType = get_item(menuItem, '[', ']')
-            # Name with ( and )
-            itemName = get_item(menuItem, '(', ')')
-            # Command with { and }
-            itemCommand= get_item(menuItem, '{', '}')
-            # And icon with < and >
-            itemIcon = get_item(menuItem, '<', '>')
+
+            empty_match = re.compile(r'^[ 	]*^')
+
+            # If the item is not a item, it possibly is just a line of text
+            if itemType == '' and not empty_match.search(menuItem):
+                itemName = menuItem
+                isComment = False
+                itemType = 'Comment'
+                itemCommand = ''
+                itemIcon = ''
+            else:
+                # Name with ( and )
+                itemName = get_item(menuItem, '(', ')')
+                # Command with { and }
+                itemCommand= get_item(menuItem, '{', '}')
+                # And icon with < and >
+                itemIcon = get_item(menuItem, '<', '>')
          
             if len(itemType) > 0:
-                menu.append([itemType.lower(), itemName, itemCommand, itemIcon])
+#                print itemName
+                menu.append([itemType.lower(), itemName, itemCommand, itemIcon, not isComment])
 
     return menu
 
@@ -65,7 +82,11 @@ def save_menu(menu, filename, overwrite, useIcons):
             intendation = intendation - 4
             if intendation < 0: intendation = 0
 
-        printString = '[' + menuline[0] + ']'
+        printString = ''
+        if not menuline[4]:
+            printString = printString + '#'
+
+        printString = printString + '[' + menuline[0] + ']'
         if menuline[1]:
             printString = printString + ' (' + menuline[1] + ')'
         if menuline[2]:

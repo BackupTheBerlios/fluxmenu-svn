@@ -29,6 +29,7 @@ TODO:
   external generator (fluxbox-generate_menu) and after it has finished, reload the menu.
 
 * A context menu for right mouse button on treeview, to show things like "delete" and "add->exec"?
+  It should also have items like "Recursive visible" and "recursive hide", better names though
 
 * Maybe some list similar to denu's showing all installed programs (freedesktop?) allowing faster
   selection of programs and their icons etc, but still that select-a-file-by-hand should be there 
