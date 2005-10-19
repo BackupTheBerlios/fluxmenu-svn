@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# Copyright 2005 Michael Rice
-# errr@errr-online.com
+# Copyright 2005 Lauri Peltonen
+# zan@mail.berlios.de
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -64,6 +64,7 @@ import findIcons
 #now we have both gtk and gtk.glade imported
 #Also, we know we are running GTK v2
 
+programPath = os.path.abspath(os.path.dirname(sys.argv[0])) + '/'
 
 windowTitle = 'Fluxbox menu editor'
 
@@ -135,7 +136,7 @@ class appgui:
 
         """The main fluxMenu window will show"""
         
-        gladefile="project1.glade"
+        gladefile=programPath + "project1.glade"
         windowname="window1"
         self.wTree=gtk.glade.XML (gladefile,windowname)
 #        self.set_geometry_hints(min_width = 300)
@@ -291,8 +292,8 @@ class appgui:
         model.clear()
 
         # Also it could be wise to create a very basic tree, begin and exit are enough ^^
-        iter = self.insert_row(model, None, 'Fluxbox', '', '', 'begin')
-        self.insert_row(model, iter, 'Exit fluxbox', '', '', 'exit')
+        iter = self.insert_row(model, None, 'Fluxbox', '', '', 'begin', True)
+        self.insert_row(model, iter, 'Exit fluxbox', '', '', 'exit', True)
 
         # Expand the menu
         self.treeview.expand_row('0', False)
@@ -406,10 +407,12 @@ class appgui:
         (model, iter) = treeselection.get_selected()
         if iter:
             result = model.remove(iter)
-
-            # The selection will get lost when removing an item
-            # So disable the toolbar
-            self.enable_toolbar(False, False)
+            if iter: 
+                treeselection.select_iter(iter)
+            else:
+                # The selection will get lost when removing an item
+                # So disable the toolbar
+                self.enable_toolbar(False, False)
 
         # Check if last item of the menu was deleted
         # (shouldn't be possible, but)
@@ -463,10 +466,10 @@ class appgui:
         (model, iter) = treeselection.get_selected()
 
         if model.get_value(iter, 3) == 'submenu' or model.get_value(iter, 3) == 'begin':
-            newIter = model.prepend(iter, ['', '', '', 'separator', True])
+            newIter = model.prepend(iter, ['--------', '', '', 'separator', True])
             self.treeview.expand_row(model.get_path(iter), False)
         else:
-            newIter = model.insert_after(model.iter_parent(iter), iter, ['', '', '', 'separator', True])
+            newIter = model.insert_after(model.iter_parent(iter), iter, ['--------', '', '', 'separator', True])
        
         # Select the separator that was created
         treeselection.select_iter(newIter)
@@ -481,7 +484,7 @@ class appgui:
 #            iconselector.ready_to_close()
 
 #        windowname2 = "dialog1"
-#        gladefile = "project1.glade"
+#        gladefile = programPath + "project1.glade"
 #        self.wTree2 = gtk.glade.XML(gladefile, windowname2)
 
         filter = gtk.FileFilter()
@@ -673,7 +676,7 @@ class appgui:
         #for the logo to show when its complete you need to edit the project1.glade
         #file manually and add the full path of where the icon will be installed.
         windowname2="aboutdialog1"
-        gladefile="project1.glade"
+        gladefile=programPath + "project1.glade"
         self.wTree2=gtk.glade.XML (gladefile,windowname2)
 
     def change_labels(self, nameIndex):
@@ -786,7 +789,7 @@ class appgui:
 # Other dialogs here, maybe they could be in separate file?
 # Could they still use those global variables?
     def preferences_dialog(self, widget):
-        gladefile = "project1.glade"
+        gladefile = programPath + "project1.glade"
         window2 = "preferences"
         self.wTree2 = gtk.glade.XML(gladefile, window2)
 

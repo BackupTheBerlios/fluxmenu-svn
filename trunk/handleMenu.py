@@ -39,7 +39,7 @@ def read_menu(menufile):
             if itemType == '' and not empty_match.search(menuItem):
                 itemName = menuItem.strip()
                 isComment = False
-                itemType = 'Comment'
+                itemType = 'comment'
                 itemCommand = ''
                 itemIcon = ''
             else:
@@ -83,19 +83,23 @@ def save_menu(menu, filename, overwrite, useIcons):
             if intendation < 0: intendation = 0
 
         printString = ''
-        if not menuline[4]:
-            printString = printString + '#'
 
-        printString = printString + '[' + menuline[0] + ']'
-        if menuline[1]:
-            printString = printString + ' (' + menuline[1] + ')'
-        if menuline[2]:
-            printString = printString + ' {' + menuline[2] + '}'
-	if useIcons and menuline[3]:
-            printString = printString + ' <' + menuline[3] + '>'
-        printString = printString + '\r\n'
+        if menuline[0] == 'comment':
+            printString = menuline[1]
+        else:
+            if not menuline[4]:
+                printString = printString + '#'
 
-        printString = printString.rjust(intendation + len(printString))
+            printString = printString + '[' + menuline[0] + ']'
+            if menuline[1]:
+                printString = printString + ' (' + menuline[1] + ')'
+            if menuline[2]:
+                printString = printString + ' {' + menuline[2] + '}'
+            if useIcons and menuline[3]:
+                printString = printString + ' <' + menuline[3] + '>'
+            printString = printString + '\r\n'
+
+            printString = printString.rjust(intendation + len(printString))
 
         cFile.write(printString)
 
