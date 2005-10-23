@@ -256,7 +256,12 @@ class fluxMenu:
         # If a menu was found and 'save original' is set
         # try to do a backup (overwrite as in 'overwrite original')
         if menu:
-            if saveOriginal: handleMenu.backup_menu(self.menuFile, '.original', overwriteOriginal)
+            if saveOriginal:
+                if handleMenu.backup_menu(self.menuFile, '.original', overwriteOriginal) == 0:
+                    warning = gtk.MessageDialog(dialog, 0, gtk.MESSAGE_WARNING,
+                                            gtk.BUTTONS_OK, "Could not save original menu to menu.original!")
+                    warning.run()
+                    warning.destroy()
 
             # Set title for window according to filename...
             self.window.set_title(self.menuFile + ' - ' + windowTitle)
@@ -397,7 +402,13 @@ class fluxMenu:
             menu = self.__serialize_menu__()
 
             # Save a backup if it is enabled
-            if saveBackup: handleMenu.backup_menu(self.menuFile, '.bck', True)
+            if saveBackup: 
+                if handleMenu.backup_menu(self.menuFile, '.bck', True) != 1:
+                    warning = gtk.MessageDialog(dialog, 0, gtk.MESSAGE_WARNING,
+                                            gtk.BUTTONS_OK, "Could not save backup to " + self.menuFile + ".bck!")
+                    warning.run()
+                    warning.destroy()
+
 
             handleMenu.save_menu(menu, self.menuFile, True, useIcons)
         else:
@@ -628,7 +639,7 @@ class fluxMenu:
 
     def __generatebutton_clicked__(self, widget):
         confirm = gtk.MessageDialog(self.window, gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_MODAL,
-                                    gtk.MESSAGE_WARNING, gtk.BUTTONS_YES_NO, "Are you sure you want to generate a new menu?\r\n/WARNING! All modifications after last save will be lost!")
+                                    gtk.MESSAGE_WARNING, gtk.BUTTONS_YES_NO, "Are you sure you want to generate a new menu?\r\nWARNING! All modifications after last save will be lost!")
         reallygenerate = confirm.run()
         confirm.destroy()
 
@@ -643,6 +654,11 @@ class fluxMenu:
             if backupfine == 1:
                 generated = os.system(expanduser(externalGenerator))
             else:
+                warning = gtk.MessageDialog(dialog, 0, gtk.MESSAGE_WARNING,
+                                        gtk.BUTTONS_OK, "Saving backup failed so menu was not generated!\r\n")
+                warning.run()
+                warning.destroy()
+
                 print "BACKUP FAILED!!!"
                 generated = 1
 

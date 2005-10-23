@@ -1,5 +1,10 @@
 (Format: Day.Month.Year)
-Changes for revision 23:
+Changes for revision 25:
+------------------------
+Changes for revision 24:
+*23.10.2005:
+  * Added some warning dialogs.
+    fluxMenu.py
 ------------------------
 Changes for revision 22:
 *23.10.2005
