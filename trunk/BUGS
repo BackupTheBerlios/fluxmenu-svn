@@ -7,8 +7,6 @@ Please inform me of them.
 
 * Loading a corrupted menu could lead to crash. This is not tested
 
-* Undo does not work. Backuping works so in case of a error + save,
-  please quit the program and copy the menu.bck on your menu. It should
-  correct the error.
+* Undo seems to work, I have not yet fully tested it though.
 
 * Adding a big icon, like 1000x1000 breaks the UI. I could use some scaling.

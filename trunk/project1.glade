@@ -17,7 +17,6 @@
   <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
-  <property name="urgency_hint">False</property>
   <signal name="destroy" handler="on_window1_destroy" last_modification_time="Wed, 25 May 2005 19:26:35 GMT"/>
 
   <child>
@@ -35,8 +34,6 @@
 	  <child>
 	    <widget class="GtkMenuBar" id="menubar1">
 	      <property name="visible">True</property>
-	      <property name="pack_direction">GTK_PACK_DIRECTION_LTR</property>
-	      <property name="child_pack_direction">GTK_PACK_DIRECTION_LTR</property>
 
 	      <child>
 		<widget class="GtkMenuItem" id="menuitem1">
@@ -381,6 +378,7 @@
 		  <property name="visible_horizontal">True</property>
 		  <property name="visible_vertical">True</property>
 		  <property name="is_important">False</property>
+		  <signal name="clicked" handler="on_generatebutton_clicked" last_modification_time="Thu, 20 Oct 2005 17:14:26 GMT"/>
 		</widget>
 		<packing>
 		  <property name="expand">False</property>
@@ -932,7 +930,6 @@
   <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
-  <property name="urgency_hint">False</property>
   <property name="has_separator">True</property>
 
   <child internal-child="vbox">
@@ -1056,7 +1053,6 @@ write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301  USA 
 </property>
-  <property name="wrap_license">False</property>
   <property name="website">http://fluxmenu.berlios.de/</property>
   <property name="website_label" translatable="yes">fluxmenu</property>
   <property name="authors">Lauri Peltonen aka Zan: Project Lead
@@ -1087,7 +1083,6 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
   <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
-  <property name="urgency_hint">False</property>
   <signal name="destroy_event" handler="on_preferences_destroy" last_modification_time="Sat, 25 Jun 2005 20:55:03 GMT"/>
 
   <child>
@@ -1387,6 +1382,7 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 				  <child>
 				    <widget class="GtkCheckButton" id="convertxpm">
 				      <property name="visible">True</property>
+				      <property name="sensitive">False</property>
 				      <property name="can_focus">True</property>
 				      <property name="label" translatable="yes">Convert icons to xpm (requires imagemagick)</property>
 				      <property name="use_underline">True</property>
@@ -1441,16 +1437,16 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 				    <widget class="GtkScrolledWindow" id="scrolledwindow7">
 				      <property name="visible">True</property>
 				      <property name="can_focus">True</property>
-				      <property name="hscrollbar_policy">GTK_POLICY_ALWAYS</property>
-				      <property name="vscrollbar_policy">GTK_POLICY_ALWAYS</property>
-				      <property name="shadow_type">GTK_SHADOW_IN</property>
+				      <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+				      <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+				      <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
 				      <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
 
 				      <child>
 					<widget class="GtkTreeView" id="treeview3">
 					  <property name="visible">True</property>
 					  <property name="can_focus">True</property>
-					  <property name="headers_visible">True</property>
+					  <property name="headers_visible">False</property>
 					  <property name="rules_hint">False</property>
 					  <property name="reorderable">False</property>
 					  <property name="enable_search">True</property>
@@ -1501,6 +1497,7 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 				  <child>
 				    <widget class="GtkButton" id="button23">
 				      <property name="visible">True</property>
+				      <property name="sensitive">False</property>
 				      <property name="can_default">True</property>
 				      <property name="can_focus">True</property>
 				      <property name="label">gtk-add</property>
@@ -1513,6 +1510,7 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 				  <child>
 				    <widget class="GtkButton" id="button24">
 				      <property name="visible">True</property>
+				      <property name="sensitive">False</property>
 				      <property name="can_default">True</property>
 				      <property name="can_focus">True</property>
 				      <property name="label">gtk-remove</property>
@@ -1583,157 +1581,53 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 			  <property name="right_padding">0</property>
 
 			  <child>
-			    <widget class="GtkVBox" id="vbox18">
+			    <widget class="GtkVBox" id="vbox19">
 			      <property name="visible">True</property>
 			      <property name="homogeneous">False</property>
 			      <property name="spacing">0</property>
 
 			      <child>
-				<widget class="GtkVBox" id="vbox19">
+				<widget class="GtkHBox" id="hbox13">
 				  <property name="visible">True</property>
 				  <property name="homogeneous">False</property>
 				  <property name="spacing">0</property>
 
 				  <child>
-				    <widget class="GtkRadioButton" id="radiobutton4">
+				    <widget class="GtkLabel" id="generatorlabel">
 				      <property name="visible">True</property>
-				      <property name="can_focus">True</property>
-				      <property name="label" translatable="yes">Generate default menu</property>
-				      <property name="use_underline">True</property>
-				      <property name="relief">GTK_RELIEF_NORMAL</property>
-				      <property name="focus_on_click">True</property>
-				      <property name="active">False</property>
-				      <property name="inconsistent">False</property>
-				      <property name="draw_indicator">True</property>
-				    </widget>
-				    <packing>
-				      <property name="padding">0</property>
-				      <property name="expand">False</property>
-				      <property name="fill">False</property>
-				    </packing>
-				  </child>
-
-				  <child>
-				    <widget class="GtkRadioButton" id="radiobutton5">
-				      <property name="visible">True</property>
-				      <property name="can_focus">True</property>
-				      <property name="label" translatable="yes">Generate Debian menu</property>
-				      <property name="use_underline">True</property>
-				      <property name="relief">GTK_RELIEF_NORMAL</property>
-				      <property name="focus_on_click">True</property>
-				      <property name="active">False</property>
-				      <property name="inconsistent">False</property>
-				      <property name="draw_indicator">True</property>
-				      <property name="group">radiobutton4</property>
-				    </widget>
-				    <packing>
-				      <property name="padding">0</property>
-				      <property name="expand">False</property>
-				      <property name="fill">False</property>
-				    </packing>
-				  </child>
-
-				  <child>
-				    <widget class="GtkRadioButton" id="radiobutton6">
-				      <property name="visible">True</property>
-				      <property name="can_focus">True</property>
-				      <property name="label" translatable="yes">Call external generator</property>
-				      <property name="use_underline">True</property>
-				      <property name="relief">GTK_RELIEF_NORMAL</property>
-				      <property name="focus_on_click">True</property>
-				      <property name="active">False</property>
-				      <property name="inconsistent">False</property>
-				      <property name="draw_indicator">True</property>
-				      <property name="group">radiobutton4</property>
-				      <signal name="toggled" handler="on_radiobutton6_toggled" last_modification_time="Sat, 25 Jun 2005 21:02:36 GMT"/>
-				    </widget>
-				    <packing>
-				      <property name="padding">0</property>
-				      <property name="expand">False</property>
-				      <property name="fill">False</property>
-				    </packing>
-				  </child>
-
-				  <child>
-				    <widget class="GtkAlignment" id="alignment23">
-				      <property name="visible">True</property>
+				      <property name="label" translatable="yes">Generator:</property>
+				      <property name="use_underline">False</property>
+				      <property name="use_markup">False</property>
+				      <property name="justify">GTK_JUSTIFY_LEFT</property>
+				      <property name="wrap">False</property>
+				      <property name="selectable">False</property>
 				      <property name="xalign">0.5</property>
 				      <property name="yalign">0.5</property>
-				      <property name="xscale">1</property>
-				      <property name="yscale">1</property>
-				      <property name="top_padding">0</property>
-				      <property name="bottom_padding">0</property>
-				      <property name="left_padding">25</property>
-				      <property name="right_padding">0</property>
+				      <property name="xpad">0</property>
+				      <property name="ypad">0</property>
+				      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+				      <property name="width_chars">-1</property>
+				      <property name="single_line_mode">False</property>
+				      <property name="angle">0</property>
+				    </widget>
+				    <packing>
+				      <property name="padding">0</property>
+				      <property name="expand">False</property>
+				      <property name="fill">False</property>
+				    </packing>
+				  </child>
 
-				      <child>
-					<widget class="GtkHBox" id="hbox13">
-					  <property name="visible">True</property>
-					  <property name="homogeneous">False</property>
-					  <property name="spacing">0</property>
-
-					  <child>
-					    <widget class="GtkLabel" id="generatorlabel">
-					      <property name="visible">True</property>
-					      <property name="label" translatable="yes">Generator:</property>
-					      <property name="use_underline">False</property>
-					      <property name="use_markup">False</property>
-					      <property name="justify">GTK_JUSTIFY_LEFT</property>
-					      <property name="wrap">False</property>
-					      <property name="selectable">False</property>
-					      <property name="xalign">0.5</property>
-					      <property name="yalign">0.5</property>
-					      <property name="xpad">0</property>
-					      <property name="ypad">0</property>
-					      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-					      <property name="width_chars">-1</property>
-					      <property name="single_line_mode">False</property>
-					      <property name="angle">0</property>
-					    </widget>
-					    <packing>
-					      <property name="padding">0</property>
-					      <property name="expand">False</property>
-					      <property name="fill">False</property>
-					    </packing>
-					  </child>
-
-					  <child>
-					    <widget class="GtkEntry" id="generatorentry">
-					      <property name="visible">True</property>
-					      <property name="can_focus">True</property>
-					      <property name="editable">True</property>
-					      <property name="visibility">True</property>
-					      <property name="max_length">0</property>
-					      <property name="text" translatable="yes"></property>
-					      <property name="has_frame">True</property>
-					      <property name="invisible_char">*</property>
-					      <property name="activates_default">False</property>
-					    </widget>
-					    <packing>
-					      <property name="padding">0</property>
-					      <property name="expand">True</property>
-					      <property name="fill">True</property>
-					    </packing>
-					  </child>
-
-					  <child>
-					    <widget class="GtkButton" id="generatorbutton">
-					      <property name="visible">True</property>
-					      <property name="can_focus">True</property>
-					      <property name="label">gtk-open</property>
-					      <property name="use_stock">True</property>
-					      <property name="relief">GTK_RELIEF_NORMAL</property>
-					      <property name="focus_on_click">True</property>
-					      <signal name="clicked" handler="on_generatorbutton_clicked" last_modification_time="Sat, 25 Jun 2005 21:04:03 GMT"/>
-					    </widget>
-					    <packing>
-					      <property name="padding">0</property>
-					      <property name="expand">False</property>
-					      <property name="fill">False</property>
-					    </packing>
-					  </child>
-					</widget>
-				      </child>
+				  <child>
+				    <widget class="GtkEntry" id="generatorentry">
+				      <property name="visible">True</property>
+				      <property name="can_focus">True</property>
+				      <property name="editable">True</property>
+				      <property name="visibility">True</property>
+				      <property name="max_length">0</property>
+				      <property name="text" translatable="yes"></property>
+				      <property name="has_frame">True</property>
+				      <property name="invisible_char">*</property>
+				      <property name="activates_default">False</property>
 				    </widget>
 				    <packing>
 				      <property name="padding">0</property>
@@ -1743,11 +1637,21 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 				  </child>
 
 				  <child>
-				    <placeholder/>
-				  </child>
-
-				  <child>
-				    <placeholder/>
+				    <widget class="GtkButton" id="generatorbutton">
+				      <property name="visible">True</property>
+				      <property name="sensitive">False</property>
+				      <property name="can_focus">True</property>
+				      <property name="label">gtk-open</property>
+				      <property name="use_stock">True</property>
+				      <property name="relief">GTK_RELIEF_NORMAL</property>
+				      <property name="focus_on_click">True</property>
+				      <signal name="clicked" handler="on_generatorbutton_clicked" last_modification_time="Sat, 25 Jun 2005 21:04:03 GMT"/>
+				    </widget>
+				    <packing>
+				      <property name="padding">0</property>
+				      <property name="expand">False</property>
+				      <property name="fill">False</property>
+				    </packing>
 				  </child>
 				</widget>
 				<packing>
@@ -1755,6 +1659,98 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 				  <property name="expand">False</property>
 				  <property name="fill">False</property>
 				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkHBox" id="hbox17">
+				  <property name="visible">True</property>
+				  <property name="homogeneous">False</property>
+				  <property name="spacing">0</property>
+
+				  <child>
+				    <widget class="GtkLabel" id="label35">
+				      <property name="visible">True</property>
+				      <property name="label" translatable="yes">Menu to load
+after generation:</property>
+				      <property name="use_underline">False</property>
+				      <property name="use_markup">False</property>
+				      <property name="justify">GTK_JUSTIFY_LEFT</property>
+				      <property name="wrap">False</property>
+				      <property name="selectable">False</property>
+				      <property name="xalign">0.5</property>
+				      <property name="yalign">0.5</property>
+				      <property name="xpad">0</property>
+				      <property name="ypad">0</property>
+				      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+				      <property name="width_chars">-1</property>
+				      <property name="single_line_mode">False</property>
+				      <property name="angle">0</property>
+				    </widget>
+				    <packing>
+				      <property name="padding">0</property>
+				      <property name="expand">False</property>
+				      <property name="fill">False</property>
+				    </packing>
+				  </child>
+
+				  <child>
+				    <widget class="GtkEntry" id="generatedfile">
+				      <property name="visible">True</property>
+				      <property name="can_focus">True</property>
+				      <property name="editable">True</property>
+				      <property name="visibility">True</property>
+				      <property name="max_length">0</property>
+				      <property name="text" translatable="yes"></property>
+				      <property name="has_frame">True</property>
+				      <property name="invisible_char">*</property>
+				      <property name="activates_default">False</property>
+				    </widget>
+				    <packing>
+				      <property name="padding">0</property>
+				      <property name="expand">True</property>
+				      <property name="fill">True</property>
+				    </packing>
+				  </child>
+
+				  <child>
+				    <widget class="GtkButton" id="menutoloadbutton">
+				      <property name="visible">True</property>
+				      <property name="sensitive">False</property>
+				      <property name="can_focus">True</property>
+				      <property name="label">gtk-open</property>
+				      <property name="use_stock">True</property>
+				      <property name="relief">GTK_RELIEF_NORMAL</property>
+				      <property name="focus_on_click">True</property>
+				      <signal name="clicked" handler="on_menutoloadbutton_clicked" last_modification_time="Thu, 20 Oct 2005 18:06:53 GMT"/>
+				    </widget>
+				    <packing>
+				      <property name="padding">0</property>
+				      <property name="expand">False</property>
+				      <property name="fill">False</property>
+				    </packing>
+				  </child>
+				</widget>
+				<packing>
+				  <property name="padding">0</property>
+				  <property name="expand">True</property>
+				  <property name="fill">True</property>
+				</packing>
+			      </child>
+
+			      <child>
+				<placeholder/>
+			      </child>
+
+			      <child>
+				<placeholder/>
+			      </child>
+
+			      <child>
+				<placeholder/>
+			      </child>
+
+			      <child>
+				<placeholder/>
 			      </child>
 			    </widget>
 			  </child>
@@ -1882,7 +1878,6 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
   <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
-  <property name="urgency_hint">False</property>
 
   <child>
     <widget class="GtkVBox" id="vbox20">
@@ -2080,7 +2075,6 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 		      <property name="can_focus">True</property>
 		      <property name="selection_mode">GTK_SELECTION_SINGLE</property>
 		      <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-		      <property name="reorderable">False</property>
 		      <signal name="move_cursor" handler="on_iconselectorsuggested_move_cursor" last_modification_time="Thu, 14 Jul 2005 19:46:53 GMT"/>
 		    </widget>
 		  </child>
@@ -2221,7 +2215,6 @@ http://creativecommons.org/licenses/by-sa/2.0/</property>
 		  <property name="can_focus">True</property>
 		  <property name="selection_mode">GTK_SELECTION_SINGLE</property>
 		  <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-		  <property name="reorderable">False</property>
 		  <signal name="move_cursor" handler="on_iconselectorall_move_cursor" last_modification_time="Thu, 14 Jul 2005 19:47:03 GMT"/>
 		</widget>
 	      </child>

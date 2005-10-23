@@ -1,54 +1,91 @@
 #!/usr/bin/env python
 # Copyright 2005 Lauri Peltonen
 # zan@mail.berlios.de
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-
-
 # This is fluxMenu that is based on fluxStyle because I don't know any python
-# :D
+"""FluxMenu
+A class wrapper for working with and editing the fluxbox menu
 
+Orignal Author Lauri Peltonen  zan@mail.berlios.de
+Bug fixes, additional support: Michael Rice  errr@errr-online.com
+
+Released under GPL v2.
+
+TODO:
+  * Fix the drag 'n' drop so that dropping over items (anything but submenu or begin)
+    wouldn't be possible (needs to write some kind of copy_tree -function)
+
+  * Make the icon-selector dialog, that would show preferred icons
+    (maybe using freedesktop's specs to find them?) and also all found icons in paths.
+    I think the "all icons" could be sorted so that the ones that could be correct are
+    first in the list. Like fbgm does the search...
+
+  * Do the configuration-dialog and make it possible to save it and load on program start.
+    What could be good solution? Maybe some xml in ~/.fluxbox ? or a plain text-file.
+    The dialog should be changed to be a window 'cause I don't know how to handle dialogs :D
+
+  * Menu and submenu sorting (by name?)
+   (* Separator to show up as a line instead of blank  <= I tried the treeview's separator,
+   it is no good because it cannot be selected. All separators would then be very static.
+   I'll stay with current "----" unless someone suggests anything better.)
+
+  * Icons next to name in treeview.
+"""
 import sys
-
-try:
-    import pygtk
-
-    #tell pyGTK, if possible, that we want GTKv2.4!
-    pygtk.require("2.0")
-except:
-    #Some distributions come with GTK2, but not pyGTK
-    print "No pygtk 2.4, trying to load gtk..."
-
-    pass
-
 
 try:
     import gtk
 except:
-    print "You need to have gtk!"
-    sys.exit(1)
+    from Tkinter import *
+    # set up the window itself
+    top = Tk()
+    message = Frame(top)
+    message.master.title("fluxMenu Error")
+    message.pack()
+    error = """You do not have pyGTK installed\n\
+please vist http://pygtk.org/ and install\nat least 2.4, \
+and for best results get 2.6 or newer."""
+    # add the widgets
+    lMessage = Label(message, text = error)
+    lMessage.pack()
+    qButton = Button(message, text = "OK", command = message.quit)
+    qButton.pack()
+    # set the loop running
+    top.mainloop()
+    raise SystemExit
 
 try:
     import gtk.glade
 except:
-    print "You need libglade2!",
-    sys.exit(1)
+    ver = sys.version[:5]
+    message = """
+You need to install libglade2\n\
+http://ftp.gnome.org/pub/GNOME/sources/libglade/2.0/\n\
+or set your PYTHONPATH correctly.\n\
+try: export PYTHONPATH=/usr/local/lib/python%s/site-packages/\n\
+or export PYTHONPATH=/usr/lib/python%s/site-packages/""" % (ver,ver)
+    m = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, \
+    gtk.BUTTONS_NONE, message)
+    m.add_button(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
+    response = m.run()
+    m.hide()
+    if response == gtk.RESPONSE_CLOSE:
+        m.destroy()
+    raise SystemExit
+
+if gtk.pygtk_version < (2,3,90):
+    #we do have gtk so lets tell them via gui that they need to update pygtk
+    #maybe we should add a 'would you like to open a browser to pygtk.org ??
+    message = """PyGtk 2.3.90 or later required for this program\n\
+it is reccomended that you get pygtk 2.6 or newer\nfor best results."""
+    m = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, \
+           gtk.BUTTONS_NONE, message)
+    m.add_button(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
+    response = m.run()
+    m.hide()
+    if response == gtk.RESPONSE_CLOSE:
+        m.destroy()
+        raise SystemExit
+                                                                         
 
 import os
 import gobject
@@ -69,10 +106,12 @@ programPath = os.path.abspath(os.path.dirname(sys.argv[0])) + '/'
 windowTitle = 'Fluxbox menu editor'
 
 
-# Define names of fields on the right pane
-# They may change because, for example submenu can
-# set its child's caption in "command" -field
-# 3rd field is wheter to show a "folder" (0) or a "file" (1) -dialog
+"""
+Define names of fields on the right pane
+They may change because, for example submenu can
+set its child's caption in "command" -field
+3rd field is wheter to show a "folder" (0) or a "file" (1) -dialog
+"""
 itemInfoCaptions = [['Name:', 'Command:', 1],
                     ['Title:', 'Command:', 1],
                     ['Name:', 'Submenu title:', 0],
@@ -80,13 +119,15 @@ itemInfoCaptions = [['Name:', 'Command:', 1],
                     ['Path:', 'Command:', 0]]
 
 
-# Define a list of possible types of items
-# Default types are: begin, end and submenu. They are handled automagically
-# Others are items and are defined here.
-# 1st item is theone in menufile, 2nd is what is shown in combobox
-# 3rd is right pane's labels' texts, 4th is active (changeable) fields
-# Fields are: 0x01 = name, 0x02 = command, 0x04 = type and 0x08 = icon
-# And 0 = not editable, 1 = editable
+"""
+Define a list of possible types of items
+Default types are: begin, end and submenu. They are handled automagically
+Others are items and are defined here.
+1st item is theone in menufile, 2nd is what is shown in combobox
+3rd is right pane's labels' texts, 4th is active (changeable) fields
+Fields are: 0x01 = name, 0x02 = command, 0x04 = type and 0x08 = icon
+And 0 = not editable, 1 = editable
+"""
 
 possibleItemTypes = [['exec', 'exec: Application', 0, 0xFF],
                      ['exit', 'exit: Shutdown fluxbox', 0, 0x0D],
@@ -106,9 +147,9 @@ possibleItemTypes = [['exec', 'exec: Application', 0, 0xFF],
                      ['submenu', 'submenu: Submenu (static)', 2, 0xB],
                      ['comment', '#: Comment', 0, 0x00]]
 
-defaultMenus = ['~/.fluxbox/menu',
-                '/usr/local/share/fluxbox/menu',
-                '/usr/share/fluxbox/menu',
+defaultMenus = ['~/.fluxbox/menu',\
+                '/usr/local/share/fluxbox/menu',\
+                '/usr/share/fluxbox/menu',\
                 '/usr/local/fluxbox/menu']
 
 
@@ -121,17 +162,19 @@ deleteBackup = True
 
 useIcons = True
 useOnlyXpm = False
-iconPaths = ['/usr/share/icons/',
-             '~/.icons/',
+iconPaths = ['/usr/share/icons/',\
+             '~/.icons/',\
              '/usr/share/pixmaps/']
-generateDebian = False
-generateDefault = False
-generateExternal = True
 externalGenerator = 'fluxbox-generate_menu'
+generatedFile = '~/.fluxbox/menu'
 
 
 
-class appgui:
+class fluxMenu:
+    
+    def main(self):
+        gtk.main()
+
     def __init__(self):
 
         """The main fluxMenu window will show"""
@@ -139,7 +182,7 @@ class appgui:
         gladefile=programPath + "project1.glade"
         windowname="window1"
         self.wTree=gtk.glade.XML (gladefile,windowname)
-#        self.set_geometry_hints(min_width = 300)
+        #self.set_geometry_hints(min_width = 300)
 
         self.window = self.wTree.get_widget("window1")
         self.typeBox = self.wTree.get_widget("typebox")
@@ -156,36 +199,38 @@ class appgui:
         self.errorLabel = self.wTree.get_widget("errorlabel")
         self.tooltips = gtk.Tooltips()
 
-        self.enable_fields(0x00)
+        self.__enable_fields__(0x00)
 
         # Disable (unusable) toolbar items
-        self.enable_toolbar(False, False)      
-#       self.wTree.get_widget("preferencesbutton").set_sensitive(False)
-        self.wTree.get_widget("generatebutton").set_sensitive(False)
+        self.__enable_toolbar__(False, False)      
+        #self.wTree.get_widget("preferencesbutton").set_sensitive(False)
+        #self.wTree.get_widget("generatebutton").set_sensitive(False)
         self.wTree.get_widget("sortbutton").set_sensitive(False)
 
 
-        handler = {"on_save1_activate":self.save_clicked,
-                   "on_save_as1_activate":self.save_as_clicked,
-                   "on_open1_activate":self.open_menu,
-                   "on_new1_activate":self.new_menu,
-                   "on_undo1_activate":self.undo_clicked,
+        handler = {"on_save1_activate":self.__save_clicked__,
+                   "on_save_as1_activate":self.__save_as_clicked__,
+                   "on_open1_activate":self.__open_menu__,
                    
-                   "on_deletebutton_clicked":self.delete_item,
-                   "on_submenubutton_clicked":self.create_submenu,
-                   "on_itembutton_clicked":self.create_item,
-                   "on_separatorbutton_clicked":self.create_separator,
-                   "on_preferencesbutton_clicked":self.preferences_dialog,
-                   "on_preferences1_activate":self.preferences_dialog,
+                   "on_new1_activate":self.__new_menu__,
+                   "on_undo1_activate":self.__undo_clicked__,
                    
-                   "on_commandbutton_clicked":self.commandbutton_clicked,
-                   "on_icon_clicked":self.icon_clicked,
-                   "on_clearicon_clicked":self.clearicon_clicked,
+                   "on_deletebutton_clicked":self.__delete_item__,
+                   "on_submenubutton_clicked":self.__create_submenu__,
+                   "on_itembutton_clicked":self.__create_item__,
+                   "on_separatorbutton_clicked":self.__create_separator__,
+                   "on_generatebutton_clicked":self.__generatebutton_clicked__,
+                   "on_preferencesbutton_clicked":self.__preferences_dialog__,
+                   "on_preferences1_activate":self.__preferences_dialog__,
+
+                   "on_commandbutton_clicked":self.__commandbutton_clicked__,
+                   "on_icon_clicked":self.__icon_clicked__,
+                   "on_clearicon_clicked":self.__clearicon_clicked__,
  
-                   "on_typebox_changed":self.typebox_changed,
-                   "on_treeview1_cursor_changed":self.treeview_changed,
-                   "on_info_changed":self.info_changed,
-                   "on_about1_activate":self.about1_activate,
+                   "on_typebox_changed":self.__typebox_changed__,
+                   "on_treeview1_cursor_changed":self.__treeview_changed__,
+                   "on_info_changed":self.__info_changed__,
+                   "on_about1_activate":self.__about1_activate__,
                    "on_quit1_activate":(gtk.main_quit),
                    "on_quit_clicked":(gtk.main_quit),
                    "on_window1_destroy":(gtk.main_quit)}
@@ -194,9 +239,9 @@ class appgui:
 
 
         # Prepare the "type" -combobox for use
-        self.prepare_type_combobox()
+        self.__prepare_type_combobox__()
         # And the treeview
-        self.prepare_treeview()
+        self.__prepare_treeview__()
 
         # Read the menu file and fill the treeview
         # Try to find a default menu
@@ -205,7 +250,7 @@ class appgui:
             menu = handleMenu.read_menu(expanduser(fileName))
             if menu: 
                 self.menuFile = expanduser(fileName)
-                self.fill_treeview(menu)
+                self.__fill_treeview__(menu)
                 break
 
         # If a menu was found and 'save original' is set
@@ -224,7 +269,8 @@ class appgui:
 
 # All preparation -functios
 
-    def prepare_type_combobox(self):
+    def __prepare_type_combobox__(self):
+        """Prepare the "type" -combobox for use"""
         self.typeList = gtk.ListStore(str)
         cell = gtk.CellRendererText()
         self.typeBox.set_model(self.typeList)
@@ -237,7 +283,7 @@ class appgui:
 
         return
 
-    def prepare_treeview(self):
+    def __prepare_treeview__(self):
         self.treemodel=gtk.TreeStore(gobject.TYPE_STRING,
                                      gobject.TYPE_STRING,
                                      gobject.TYPE_STRING,
@@ -248,7 +294,7 @@ class appgui:
         renderer=gtk.CellRendererText()
         renderer2=gtk.CellRendererToggle()
         renderer2.set_property("activatable", True)
-        renderer2.connect( 'toggled', self.visible_toggled, self.treemodel)
+        renderer2.connect( 'toggled', self.__visible_toggled__, self.treemodel)
         column=gtk.TreeViewColumn("Item", renderer, text=0)
         column2=gtk.TreeViewColumn("Visible", renderer2, active=4)
         column.set_resizable(True)
@@ -258,24 +304,31 @@ class appgui:
         return
 
 
-    def fill_treeview(self, menu):
+    def __fill_treeview__(self, menu):
         model = self.treemodel
         iter = None
+        beginhasbeen = False
+
         for item in menu:
             if(item[0].lower() == 'begin'):
-                iter = self.insert_row(model, None, item[1], item[2], item[3], item[0], item[4])
+                iter = self.__insert_row__(model, None, item[1], item[2], item[3], item[0], item[4])
+                beginhasbeen = True
             elif(item[0].lower() == 'submenu'):
                 if not iter: break
-                iter = self.insert_row(model, iter, item[1], item[2], item[3], item[0], item[4])
+                iter = self.__insert_row__(model, iter, item[1], item[2], item[3], item[0], item[4])
             elif(item[0].lower() == 'end'):
                 if not iter: break
                 iter = model.iter_parent(iter)
             elif(item[0].lower() == 'separator'):
                 if not iter: break
-                self.insert_row(model, iter, '--------', item[2], item[3], item[0], item[4])
+                self.__insert_row__(model, iter, '--------', item[2], item[3], item[0], item[4])
             else:
-                if not iter: break
-                self.insert_row(model, iter, item[1], item[2], item[3], item[0], item[4])
+                if not iter:
+                    if not beginhasbeen:
+                        self.__insert_row__(model, None, item[1], item[2], item[3], item[0], item[4])
+                    else: break
+                else: self.__insert_row__(model, iter, item[1], item[2], item[3], item[0], item[4])
+
 
         # Expand the root -level of the menu
         # Changing 2nd parameter to True will expand whole menu
@@ -286,23 +339,27 @@ class appgui:
     
 # Call backs begin here 
 
-    def new_menu(self, widget):
+    def __new_menu__(self, widget):
         # Clear the treeview and that's it
         model = self.treeview.get_model()
         model.clear()
 
         # Also it could be wise to create a very basic tree, begin and exit are enough ^^
-        iter = self.insert_row(model, None, 'Fluxbox', '', '', 'begin', True)
-        self.insert_row(model, iter, 'Exit fluxbox', '', '', 'exit', True)
+        iter = self.__insert_row__(model, None, 'Fluxbox', '', '', 'begin', True)
+        self.__insert_row__(model, iter, 'Exit fluxbox', '', '', 'exit', True)
 
         # Expand the menu
         self.treeview.expand_row('0', False)
 
         self.menuFile = ''
+
+        # Disable toolbar as the menu is brand new, no item is selected etc
+        self.__enable_toolbar__(False, False)
+
         return
 
 
-    def open_menu(self, widget):
+    def __open_menu__(self, widget):
         dialog = gtk.FileChooserDialog("Open menu...",
                                         self.window ,gtk.FILE_CHOOSER_ACTION_OPEN,
                                         (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
@@ -324,7 +381,7 @@ class appgui:
             self.treeview.get_model().clear()
             self.menuFile = dialog.get_filename()
             menu = handleMenu.read_menu(self.menuFile)
-            self.fill_treeview(menu)
+            self.__fill_treeview__(menu)
             self.window.set_title(self.menuFile + ' - ' + windowTitle)
             dialog.destroy()
         else:
@@ -334,10 +391,10 @@ class appgui:
         return
 
 
-    def save_clicked(self, widget):
+    def __save_clicked__(self, widget):
         # Save the menu, call handleMenu -> save
         if self.menuFile:
-            menu = self.serialize_menu()
+            menu = self.__serialize_menu__()
 
             # Save a backup if it is enabled
             if saveBackup: handleMenu.backup_menu(self.menuFile, '.bck', True)
@@ -350,7 +407,7 @@ class appgui:
         return
 
 
-    def save_as_clicked(self, widget):
+    def __save_as_clicked__(self, widget):
         dialog = gtk.FileChooserDialog("Save menu as...",
                                         self.window, gtk.FILE_CHOOSER_ACTION_SAVE,
                                         (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
@@ -373,7 +430,7 @@ class appgui:
             if not isAlready or answer == gtk.RESPONSE_YES:
                 self.menuFile = dialog.get_filename()
                 self.window.set_title(self.menuFile + ' - ' + windowTitle)
-                menu = self.serialize_menu()
+                menu = self.__serialize_menu__()
                 handleMenu.save_menu(menu, self.menuFile, True, useIcons)
 
         dialog.destroy()
@@ -381,13 +438,13 @@ class appgui:
         return
 
 
-    def undo_clicked(self, widget):
-        # Loads the menu.bck, so reverts to last saved backup
+    def __undo_clicked__(self, widget):
+        """Loads the menu.bck, so reverts to last saved backup"""
         if saveBackup:
             if isfile(self.menuFile + '.bck'):
                 self.treeview.get_model().clear()
                 menu = handleMenu.read_menu(self.menuFile + '.bck')
-                self.fill_treeview(menu)
+                self.__fill_treeview__(menu)
             else:
                 message = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_WARNING, gtk.BUTTONS_OK,
                                              "Cannot revert to last backup: No backup-file (%s.bck)" %self.menuFile)
@@ -402,7 +459,7 @@ class appgui:
         return
 
 
-    def delete_item(self, widget):
+    def __delete_item__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
         if iter:
@@ -412,7 +469,7 @@ class appgui:
             else:
                 # The selection will get lost when removing an item
                 # So disable the toolbar
-                self.enable_toolbar(False, False)
+                self.__enable_toolbar__(False, False)
 
         # Check if last item of the menu was deleted
         # (shouldn't be possible, but)
@@ -421,7 +478,7 @@ class appgui:
         return
 
 
-    def create_submenu(self, widget):
+    def __create_submenu__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
         if model.get_value(iter, 3) == 'submenu' or model.get_value(iter, 3) == 'begin':
@@ -434,7 +491,7 @@ class appgui:
         # the just created submenu
         # First select the submenu we created
         treeselection.select_iter(newIter)
-        self.treeview_changed(newIter)
+        self.__treeview_changed__(newIter)
         self.nameEntry.grab_focus()
 
         # Then create a new item under that
@@ -443,7 +500,7 @@ class appgui:
         return
 
 
-    def create_item(self, widget):
+    def __create_item__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
 
@@ -455,13 +512,13 @@ class appgui:
 
         # Select the item just created
         treeselection.select_iter(newIter)
-        self.treeview_changed(newIter)
+        self.__treeview_changed__(newIter)
         self.nameEntry.grab_focus()
 
         return
 
 
-    def create_separator(self, widget):
+    def __create_separator__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
 
@@ -473,12 +530,12 @@ class appgui:
        
         # Select the separator that was created
         treeselection.select_iter(newIter)
-        self.treeview_changed(newIter)
+        self.__treeview_changed__(newIter)
 
         return
 
 
-    def icon_clicked(self,widget):
+    def __icon_clicked__(self,widget):
 #	iconselector = selectIcon(useOnlyXpm)
 #        while not iconselector.ready_to_close():
 #            iconselector.ready_to_close()
@@ -527,7 +584,7 @@ class appgui:
 
         return
 
-    def clearicon_clicked(self, widget):
+    def __clearicon_clicked__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
         model.set_value(iter, 2, None)
@@ -536,9 +593,9 @@ class appgui:
 
 
 
-    def commandbutton_clicked(self, widget):
-
-        # Check whether it should be "select file" or "select folder" -dialog
+    def __commandbutton_clicked__(self, widget):
+        """Check whether it should be "select file" or "select folder" -dialog"""
+        
         model = self.typeBox.get_model()
         index = self.typeBox.get_active()
 
@@ -569,9 +626,42 @@ class appgui:
 
         return
 
+    def __generatebutton_clicked__(self, widget):
+        confirm = gtk.MessageDialog(self.window, gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_WARNING, gtk.BUTTONS_YES_NO, "Are you sure you want to generate a new menu?\r\n/WARNING! All modifications after last save will be lost!")
+        reallygenerate = confirm.run()
+        confirm.destroy()
+
+        if reallygenerate == gtk.RESPONSE_YES:
+            pleasewait = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, "Please wait, the menu is being generated ("+externalGenerator+")")
+            pleasewait.show()
+
+            backupfine = 1
+            if saveBackupBeforeGenerating: 
+                backupfine = handleMenu.backup_menu(self.menuFile, '.bck', True)
+
+            if backupfine == 1:
+                generated = os.system(expanduser(externalGenerator))
+            else:
+                print "BACKUP FAILED!!!"
+                generated = 1
+
+            pleasewait.destroy()
+
+            if generated == 0:
+                # Generation was succesfull
+                self.treeview.get_model().clear()
+                menu = handleMenu.read_menu(expanduser(generatedFile))
+                self.fill_treeview(menu)
+
+        return
 
 
-    def typebox_changed(self, widget):
+    def __typebox_changed__(self, widget):
+        """If user selected a field what is marked as not editable,
+        don't let user select it but revert to the old one Change the 
+        labels on right pane Clear possible error and set old type to 
+        be the current one """
         model = self.typeBox.get_model()
         index = self.typeBox.get_active()
 
@@ -583,10 +673,10 @@ class appgui:
 
             if self.oldType != index:
                 if availableFields & 0x04:
-                    self.enable_fields(availableFields)
+                    self.__enable_fields__(availableFields)
 
                     # Change the labels on right pane
-                    self.change_labels(possibleItemTypes[index][2])
+                    self.__change_labels__(possibleItemTypes[index][2])
 
                     # Clear possible error and set old type to be the current one
                     self.errorLabel.set_text('')
@@ -610,7 +700,11 @@ class appgui:
         return
 
 
-    def treeview_changed(self, widget):
+    def __treeview_changed__(self, widget):
+        """Fill values into their fields on the right pane 
+        The type is a little bit harder NOTE: Must be in this order, 
+        because typebox_changed will be called IMMEDIATELY after 
+        set_active """
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
 
@@ -631,11 +725,11 @@ class appgui:
                 self.typeBox.set_active(possibleItemTypes.index(itemType))
 
                 # Change the labels on right pane
-                self.change_labels(itemType[2])
+                self.__change_labels__(itemType[2])
 
                 # If the item selected from the menu does not allow
                 # changing its type, then disable the type-field
-                self.enable_fields(itemType[3])
+                self.__enable_fields__(itemType[3])
 
                 # Clear the error-label and set the oldtype to current one
                 self.errorLabel.set_text('')
@@ -650,14 +744,14 @@ class appgui:
                     self.iconIcon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
 
                 # Disable toolbar if 'begin' is enabled
-                if type == 'begin': self.enable_toolbar(True, False)
-                else: self.enable_toolbar(True, True)
+                if type == 'begin': self.__enable_toolbar__(True, False)
+                else: self.__enable_toolbar__(True, True)
 
         return
 
 
-    def info_changed(self, widget):
-        # Update changes to treeview
+    def __info_changed__(self, widget):
+        """Update changes to treeview"""
 
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
@@ -668,23 +762,23 @@ class appgui:
 
         return
 
-    def visible_toggled(self,widget, path, model):
+    def __visible_toggled__(self,widget, path, model):
         self.treemodel[path][4] = not self.treemodel[path][4]
         return
 
-    def about1_activate(self,widget):
+    def __about1_activate__(self,widget):
         #for the logo to show when its complete you need to edit the project1.glade
         #file manually and add the full path of where the icon will be installed.
         windowname2="aboutdialog1"
         gladefile=programPath + "project1.glade"
         self.wTree2=gtk.glade.XML (gladefile,windowname2)
 
-    def change_labels(self, nameIndex):
+    def __change_labels__(self, nameIndex):
         self.nameLabel.set_text(itemInfoCaptions[nameIndex][0])
         self.commandLabel.set_text(itemInfoCaptions[nameIndex][1])
         return
 
-    def insert_row(self, model, parent, first, second, third, fourth, fifth):
+    def __insert_row__(self, model, parent, first, second, third, fourth, fifth):
         myiter = model.insert_before(parent, None)
         model.set_value(myiter, 0, first)
         model.set_value(myiter, 1, second)
@@ -693,7 +787,8 @@ class appgui:
         model.set_value(myiter, 4, fifth)
         return myiter
 
-    def enable_fields(self, fields):
+
+    def __enable_fields__(self, fields):
         self.nameEntry.set_sensitive(fields & 0x01)
         self.nameLabel.set_sensitive(fields & 0x01)
 
@@ -713,9 +808,7 @@ class appgui:
 
         return
 
-
-
-    def enable_toolbar(self, enable_add, enable_modify):
+    def __enable_toolbar__(self, enable_add, enable_modify):
         self.wTree.get_widget("deletebutton").set_sensitive(enable_modify)
 
         self.wTree.get_widget("submenubutton").set_sensitive(enable_add)
@@ -725,7 +818,7 @@ class appgui:
 
 
     # Serialize the menu from treeview to table
-    def serialize_menu(self):
+    def __serialize_menu__(self):
         treeselection = self.treeview.get_selection()
         model = self.treeview.get_model()
         iter = model.get_iter('0')
@@ -788,24 +881,23 @@ class appgui:
 
 # Other dialogs here, maybe they could be in separate file?
 # Could they still use those global variables?
-    def preferences_dialog(self, widget):
+    def __preferences_dialog__(self, widget):
         gladefile = programPath + "project1.glade"
         window2 = "preferences"
         self.wTree2 = gtk.glade.XML(gladefile, window2)
 
         # Messagehandlers for this window
-        handler = {"on_checkbutton2_toggled":self.original_toggled,
-                   "on_checkbutton7_toggled":self.icon_toggled,
-                   "on_checkbutton8_toggled":self.xpm_toggled,
-                   "on_radiobutton6_toggled":self.external_toggled,
-                   "on_okbutton2_clicked":self.preferences_ok,
-                   "on_cancelbutton2_clicked":self.preferences_cancel,
-                   "on_preferences_destroy":self.preferences_cancel}
+        handler = {"on_checkbutton2_toggled":self.__original_toggled__,
+                   "on_checkbutton7_toggled":self.__icon_toggled__,
+                   "on_checkbutton8_toggled":self.__xpm_toggled__,
+                   "on_okbutton2_clicked":self.__preferences_ok__,
+                   "on_cancelbutton2_clicked":self.__preferences_cancel__,
+                   "on_preferences_destroy":self.__preferences_cancel__}
 
 
         self.wTree2.signal_autoconnect(handler)
 
-        self.fill_preferences()
+        self.__fill_preferences__()
 
         return
 
@@ -814,7 +906,7 @@ class appgui:
 # When I move this whole dialog to another file.
 # I just have to get this to work now.
 
-    def fill_preferences(self):
+    def __fill_preferences__(self):
         self.wTree2.get_widget("checkbutton2").set_active(saveOriginal)
         self.wTree2.get_widget("checkbutton3").set_active(not overwriteOriginal)
         self.wTree2.get_widget("checkbutton4").set_active(saveBackup)
@@ -834,14 +926,12 @@ class appgui:
         for path in iconPaths:
             self.pathstore.append((path,))
 
-        self.wTree2.get_widget("radiobutton4").set_active(generateDebian)
-        self.wTree2.get_widget("radiobutton5").set_active(generateDefault)
-        self.wTree2.get_widget("radiobutton6").set_active(generateExternal)
         self.wTree2.get_widget("generatorentry").set_text(externalGenerator)
+        self.wTree2.get_widget("generatedfile").set_text(generatedFile)
 
         return
 
-    def get_preferences(self):
+    def __get_preferences__(self):
         global saveOriginal
         global overWriteOriginal
         global saveBackup
@@ -853,6 +943,7 @@ class appgui:
         global generateDefault
         global generateExternal
         global externalGenerator
+        global generatedFile
 
         saveOriginal = self.wTree2.get_widget("checkbutton2").get_active()
         overWriteOriginal = not self.wTree2.get_widget("checkbutton3").get_active()
@@ -866,10 +957,8 @@ class appgui:
 #        iconPaths = ['/usr/share/icons/',
 #             '~/.icons/']
 
-        generateDebian = self.wTree2.get_widget("radiobutton4").get_active()
-        generateDefault = self.wTree2.get_widget("radiobutton5").get_active()
-        generateExternal = self.wTree2.get_widget("radiobutton6").get_active()
         externalGenerator = self.wTree2.get_widget("generatorentry").get_text()
+        generatedFile = self.wTree2.get_widget("generatedfile").get_text()
 
         if not useIcons:
             self.iconButton.set_sensitive(False)
@@ -877,11 +966,11 @@ class appgui:
         return
 
 
-    def original_toggled(self, widget):
+    def __original_toggled__(self, widget):
         self.wTree2.get_widget("checkbutton3").set_sensitive(self.wTree2.get_widget("checkbutton2").get_active())
         return
 
-    def icon_toggled(self, widget):
+    def __icon_toggled__(self, widget):
         self.wTree2.get_widget("checkbutton8").set_sensitive(self.wTree2.get_widget("checkbutton7").get_active())
         if self.wTree2.get_widget("checkbutton7").get_active():
             self.wTree2.get_widget("convertxpm").set_sensitive(self.wTree2.get_widget("checkbutton8").get_active())
@@ -889,24 +978,18 @@ class appgui:
             self.wTree2.get_widget("convertxpm").set_sensitive(False)
         return
 
-    def xpm_toggled(self, widget):
+    def __xpm_toggled__(self, widget):
         self.wTree2.get_widget("convertxpm").set_sensitive(self.wTree2.get_widget("checkbutton8").get_active())
         return
 
 
-    def external_toggled(self, widget):
-        self.wTree2.get_widget("generatorlabel").set_sensitive(self.wTree2.get_widget("radiobutton6").get_active())
-        self.wTree2.get_widget("generatorentry").set_sensitive(self.wTree2.get_widget("radiobutton6").get_active())
-        self.wTree2.get_widget("generatorbutton").set_sensitive(self.wTree2.get_widget("radiobutton6").get_active())
-        return
-
-    def preferences_ok(self, widget):
-        self.get_preferences()
-#        self.save_preferencese(expanduser('~/.fluxbox/fluxMenu'))
+    def __preferences_ok__(self, widget):
+        self.__get_preferences__()
+        #self.save_preferencese(expanduser('~/.fluxbox/fluxMenu'))
         self.wTree2.get_widget("preferences").destroy()
         return
 
-    def preferences_cancel(self, widget):
+    def __preferences_cancel__(self, widget):
         self.wTree2.get_widget("preferences").destroy()
         return
 
@@ -916,8 +999,9 @@ class appgui:
 # ... load 'em ....
 
 # Launch the app
-app=appgui()
-gtk.main()
+if __name__ == "__main__":
+    app = fluxMenu()
+    app.main()
 
 # If backup should be deleted on quit, do it here
 # ... delete backup ...

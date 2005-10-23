@@ -33,12 +33,12 @@ def read_menu(menufile):
             # Item's type is marked with [ and ]
             itemType = get_item(menuItem, '[', ']')
 
-            empty_match = re.compile(r'^[ 	]*$')
+            empty_match = re.compile(r'^[ 	\r\n]*$')
 
             # If the item is not a item, it possibly is just a line of text
             if itemType == '' and not empty_match.search(menuItem):
                 itemName = menuItem.strip()
-                isComment = False
+                isComment = True
                 itemType = 'comment'
                 itemCommand = ''
                 itemIcon = ''
@@ -85,7 +85,7 @@ def save_menu(menu, filename, overwrite, useIcons):
         printString = ''
 
         if menuline[0] == 'comment':
-            printString = menuline[1]
+            printString = menuline[1] + '\r\n'
         else:
             if not menuline[4]:
                 printString = printString + '#'
