@@ -1,5 +1,7 @@
 (Format: Day.Month.Year)
 Changes for revision 25:
+*01.11.2005:
+  * handleMenu.py is now pydoc compatible. Thanks Errr
 ------------------------
 Changes for revision 24:
 *23.10.2005:
