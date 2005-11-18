@@ -21,7 +21,6 @@ TODO:
 
   * Do the configuration-dialog and make it possible to save it and load on program start.
     What could be good solution? Maybe some xml in ~/.fluxbox ? or a plain text-file.
-    The dialog should be changed to be a window 'cause I don't know how to handle dialogs :D
 
   * Menu and submenu sorting (by name?)
    (* Separator to show up as a line instead of blank  <= I tried the treeview's separator,
@@ -94,6 +93,8 @@ from os.path import isfile,expanduser
 
 import handleMenu
 import findIcons
+import parseConfig
+
 #import preferences
 #import selectIcon
 #from selectIcon import selectIcon
@@ -168,6 +169,7 @@ iconPaths = ['/usr/share/icons/',\
 externalGenerator = 'fluxbox-generate_menu'
 generatedFile = '~/.fluxbox/menu'
 
+settingsFile = '~/.fluxbox/fluxMenu'
 
 
 class fluxMenu:
@@ -269,10 +271,49 @@ class fluxMenu:
 
         self.oldType = 0
 
+        # Load settings from config
+        self.__load_config__(expanduser(settingsFile))
+
         return
 
 
 # All preparation -functios
+
+    def __load_config__(self, file):
+        """Loads config file 'file' and fills the global preferences
+        according to values in the config"""
+
+        global saveOriginal
+        global overWriteOriginal
+        global saveBackup
+        global saveBackupBeforeGenerating
+        global deleteBackup
+        global useIcons
+        global useOnlyXpm
+        global generateExternal
+        global externalGenerator
+        global generatedFile
+        global iconPaths
+
+        settings = parseConfig.parse_file(file)
+        #print settings
+
+        if settings:
+            if settings.has_key('SAVE_ORIGINAL'): saveOriginal = ( settings['SAVE_ORIGINAL'] == ['True'] )
+            if settings.has_key('OVERWRITE_ORIGINAL'): overWriteOriginal = ( settings['OVERWRITE_ORIGINAL'] == ['True'] )
+            if settings.has_key('SAVE_BACKUP'): saveBackup = ( settings['SAVE_BACKUP'] == ['True'] )
+            if settings.has_key('SAVE_BACKUP_BEFORE_GENERATING'): saveBackupBeforeGenerating = ( settings['SAVE_BACKUP_BEFORE_GENERATING'] == ['True'] )
+            if settings.has_key('DELETE_BACKUP'): deleteBackup = ( settings['DELETE_BACKUP'] == ['True'] )
+            if settings.has_key('USE_ICONS'): useIcons = ( settings['USE_ICONS'] == ['True'] )
+            if settings.has_key('USE_ONLY_XPM'): useOnlyXpm = ( settings['USE_ONLY_XPM'] == ['True'] )
+
+            if settings.has_key('ICON_PATH'): iconPaths = settings['ICON_PATH']
+            if settings.has_key('GENERATOR'): externalGenerator = settings['GENERATOR'][0]
+            if settings.has_key('GENERATED_FILE'): generatedFile = settings['GENERATED_FILE'][0]
+
+            return True
+        else: return False
+
 
     def __prepare_type_combobox__(self):
         """Prepare the "type" -combobox for use"""
@@ -475,7 +516,7 @@ class fluxMenu:
         (model, iter) = treeselection.get_selected()
         if iter:
             result = model.remove(iter)
-            if iter: 
+            if result: 
                 treeselection.select_iter(iter)
             else:
                 # The selection will get lost when removing an item
@@ -668,7 +709,7 @@ class fluxMenu:
                 # Generation was succesfull
                 self.treeview.get_model().clear()
                 menu = handleMenu.read_menu(expanduser(generatedFile))
-                self.fill_treeview(menu)
+                self.__fill_treeview__(menu)
 
         return
 
@@ -913,7 +954,7 @@ class fluxMenu:
 
         self.wTree2.signal_autoconnect(handler)
 
-        self.__fill_preferences__()
+        self.__fill_preferences_dialog__()
 
         return
 
@@ -922,7 +963,7 @@ class fluxMenu:
 # When I move this whole dialog to another file.
 # I just have to get this to work now.
 
-    def __fill_preferences__(self):
+    def __fill_preferences_dialog__(self):
         self.wTree2.get_widget("checkbutton2").set_active(saveOriginal)
         self.wTree2.get_widget("checkbutton3").set_active(not overwriteOriginal)
         self.wTree2.get_widget("checkbutton4").set_active(saveBackup)
@@ -947,7 +988,7 @@ class fluxMenu:
 
         return
 
-    def __get_preferences__(self):
+    def __set_preferences__(self):
         global saveOriginal
         global overWriteOriginal
         global saveBackup
@@ -955,11 +996,10 @@ class fluxMenu:
         global deleteBackup
         global useIcons
         global useOnlyXpm
-        global generateDebian
-        global generateDefault
         global generateExternal
         global externalGenerator
         global generatedFile
+        global iconPaths
 
         saveOriginal = self.wTree2.get_widget("checkbutton2").get_active()
         overWriteOriginal = not self.wTree2.get_widget("checkbutton3").get_active()
@@ -970,16 +1010,34 @@ class fluxMenu:
         useIcons = self.wTree2.get_widget("checkbutton7").get_active()
         useOnlyXpm = self.wTree2.get_widget("checkbutton8").get_active()
 
-#        iconPaths = ['/usr/share/icons/',
-#             '~/.icons/']
+
+        iconPaths = []
+        
+        iter = self.pathstore.get_iter('0')
+        while iter:
+            iconPaths.append(self.pathstore.get_value(iter, 0))
+            iter = self.pathstore.iter_next(iter)
+
 
         externalGenerator = self.wTree2.get_widget("generatorentry").get_text()
         generatedFile = self.wTree2.get_widget("generatedfile").get_text()
 
+        preferences = { 'SAVE_ORIGINAL': [saveOriginal],
+                        'OVERWRITE_ORIGINAL': [overWriteOriginal],
+                        'SAVE_BACKUP': [saveBackup],
+                        'SAVE_BACKUP_BEFORE_GENERATING': [saveBackupBeforeGenerating],
+                        'DELETE_BACKUP': [deleteBackup],
+                        'USE_ICONS': [useIcons],
+                        'USE_ONLY_XPM': [useOnlyXpm],
+                        'ICON_PATH': iconPaths,
+                        'GENERATOR': [externalGenerator],
+                        'GENERATED_FILE': [generatedFile] }
+
         if not useIcons:
             self.iconButton.set_sensitive(False)
             self.clearIconButton.set_sensitive(False)
-        return
+
+        return preferences
 
 
     def __original_toggled__(self, widget):
@@ -1000,8 +1058,9 @@ class fluxMenu:
 
 
     def __preferences_ok__(self, widget):
-        self.__get_preferences__()
-        #self.save_preferencese(expanduser('~/.fluxbox/fluxMenu'))
+        preferences = self.__set_preferences__()
+
+        parseConfig.save_config(expanduser(settingsFile), preferences)
         self.wTree2.get_widget("preferences").destroy()
         return
 
@@ -1011,7 +1070,11 @@ class fluxMenu:
 
 
 # Main program starts here
-# First load default options
+
+# First thing would be to parse command line arguments
+# fluxMenu [-rc configfile] [menufile]
+
+# Then load settings from ~/.fluxbox/fluxMenu
 # ... load 'em ....
 
 # Launch the app

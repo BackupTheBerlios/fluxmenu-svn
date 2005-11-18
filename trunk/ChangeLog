@@ -1,5 +1,9 @@
 (Format: Day.Month.Year)
 Changes for revision 25:
+*18.11.2005
+  * Added support for config file (preferences-dialog)
+    Saves config by default to ~/.fluxbox/fluxMenu
+    parseConfig.py fluxMenu.py
 *01.11.2005:
   * handleMenu.py is now pydoc compatible. Thanks Errr
 ------------------------
