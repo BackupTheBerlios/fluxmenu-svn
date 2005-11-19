@@ -95,6 +95,8 @@ import handleMenu
 import findIcons
 import parseConfig
 
+from iconSelector import iconSelector
+
 #import preferences
 #import selectIcon
 #from selectIcon import selectIcon
@@ -181,7 +183,7 @@ class fluxMenu:
 
         """The main fluxMenu window will show"""
         
-        gladefile=programPath + "project1.glade"
+        gladefile=programPath + "fluxMenu.glade"
         windowname="window1"
         self.wTree=gtk.glade.XML (gladefile,windowname)
         #self.set_geometry_hints(min_width = 300)
@@ -227,6 +229,7 @@ class fluxMenu:
 
                    "on_commandbutton_clicked":self.__commandbutton_clicked__,
                    "on_icon_clicked":self.__icon_clicked__,
+                   "on_showiconselector_clicked":self.__iconselector_clicked__,
                    "on_clearicon_clicked":self.__clearicon_clicked__,
  
                    "on_typebox_changed":self.__typebox_changed__,
@@ -273,6 +276,11 @@ class fluxMenu:
 
         # Load settings from config
         self.__load_config__(expanduser(settingsFile))
+
+        # Create iconselector and load icons into it
+        self.iconselector = iconSelector(self.icon_selected)
+        for path in iconPaths:
+            self.iconselector.load_icons(path, True, False)
 
         return
 
@@ -593,7 +601,7 @@ class fluxMenu:
 #            iconselector.ready_to_close()
 
 #        windowname2 = "dialog1"
-#        gladefile = programPath + "project1.glade"
+#        gladefile = programPath + "fluxMenu.glade"
 #        self.wTree2 = gtk.glade.XML(gladefile, windowname2)
 
         filter = gtk.FileFilter()
@@ -643,7 +651,22 @@ class fluxMenu:
         self.iconIcon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
         return
 
+    def __iconselector_clicked__(self, widget):
+        command = self.commandEntry.get_text()
+        if len(command) == 0:
+            command = self.nameEntry.get_text()
+            
+        path, command = os.path.split(command)
 
+        if len(command) == 0:
+            command = "fluxbox"
+
+        command = command.lower()
+
+        print command
+
+        self.iconselector.dialog(command)
+        return
 
     def __commandbutton_clicked__(self, widget):
         """Check whether it should be "select file" or "select folder" -dialog"""
@@ -824,10 +847,10 @@ class fluxMenu:
         return
 
     def __about1_activate__(self,widget):
-        #for the logo to show when its complete you need to edit the project1.glade
+        #for the logo to show when its complete you need to edit the fluxMenu.glade
         #file manually and add the full path of where the icon will be installed.
         windowname2="aboutdialog1"
-        gladefile=programPath + "project1.glade"
+        gladefile=programPath + "fluxMenu.glade"
         self.wTree2=gtk.glade.XML (gladefile,windowname2)
 
     def __change_labels__(self, nameIndex):
@@ -935,11 +958,19 @@ class fluxMenu:
         return menu
 
 
+    def icon_selected(self):
+        icon = self.iconselector.get_icon()
+        if icon: pass
+            # Do something wise here :P
+#        print "JO"
+        return
+
+
 
 # Other dialogs here, maybe they could be in separate file?
 # Could they still use those global variables?
     def __preferences_dialog__(self, widget):
-        gladefile = programPath + "project1.glade"
+        gladefile = programPath + "fluxMenu.glade"
         window2 = "preferences"
         self.wTree2 = gtk.glade.XML(gladefile, window2)
 
@@ -1062,6 +1093,12 @@ class fluxMenu:
 
         parseConfig.save_config(expanduser(settingsFile), preferences)
         self.wTree2.get_widget("preferences").destroy()
+
+        # Add new paths into iconselector
+        self.iconselector.clear_icons()
+        for path in iconPaths:
+            self.iconselector.load_icons(path, True, False)
+
         return
 
     def __preferences_cancel__(self, widget):
