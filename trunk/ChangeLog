@@ -1,11 +1,20 @@
 (Format: Day.Month.Year)
 Changes for revision 27:
-
+*30.12.2005
+  * The dialog for selecting icon from file now remembers
+    the file/path that was last selected. This makes
+    it easier to browse to certain folder for icons.
+    (Thanks Stathis K.)
+    fluxMenu.py
+  * Icons are not loaded from folders (ICON_PATH) if
+    USE_ICONS is false = user does not want icons in
+    the menu
+    fluxMenu.py
 ------------------------
 Changes for revision 26:
 *18.11.2005
   * Added support for config file (preferences-dialog)
-    Saves config by default to ~/.fluxbox/fluxMenu
+    Saves config by default to ~/.fluxbox/fluxMenu.rc
     parseConfig.py fluxMenu.py
 *01.11.2005:
   * handleMenu.py is now pydoc compatible. Thanks Errr

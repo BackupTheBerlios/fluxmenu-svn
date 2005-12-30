@@ -30,11 +30,12 @@ class iconSelector:
 
         handler = {"on_iconselector_cancel_clicked": self.__cancel_clicked__,
                    "on_iconselector_find_clicked": self.__match_changed__,
+                   "on_iconselector_item_activated": self.__icon_selected__,
                    "on_iconselector_destroy": self.__cancel_clicked__ }
 
         self.wTree.signal_autoconnect (handler)
 
-        self.model = gtk.ListStore(str, gtk.gdk.Pixbuf)
+        self.model = gtk.ListStore(str, gtk.gdk.Pixbuf, str)
         self.iconview.set_model(self.model)
         self.iconview.set_text_column(0)
         self.iconview.set_pixbuf_column(1)
@@ -62,7 +63,7 @@ class iconSelector:
                        (file.find('.png') >= 0) or \
                        (file.find('.jpg') >= 0) or \
                        (file.find('.jpeg') >= 0):
-                        self.icons.append( (join(root, file), file) )
+                        self.icons.append( (join(root, file), file, join(root, file)) )
 
 #        for icon in self.icons:
 #            print icon
@@ -100,7 +101,7 @@ class iconSelector:
         for icon in self.icons:
             if icon[0].lower().find(iconname) >= 0:
                 pixbuf = gtk.gdk.pixbuf_new_from_file(icon[0])
-                self.model.append([icon[1], pixbuf])
+                self.model.append([icon[1], pixbuf, icon[0]])
 
         return None
 
@@ -135,4 +136,14 @@ class iconSelector:
         if (len(matchline) > 0):
             print matchline
             self.dialog(matchline)
+        return
+
+    def __icon_selected__(self, widget, path):
+        print path
+        path = self.model.get_iter(path[0])
+        print self.model.get_value(path, 2)
+        self.is_selected = True
+        self.selected_icon = self.model.get_value(path, 2)
+        self.__hide__()
+        self.on_destroy()
         return

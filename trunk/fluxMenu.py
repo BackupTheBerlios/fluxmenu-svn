@@ -11,23 +11,25 @@ Bug fixes, additional support: Michael Rice  errr@errr-online.com
 Released under GPL v2.
 
 TODO:
-  * Fix the drag 'n' drop so that dropping over items (anything but submenu or begin)
-    wouldn't be possible (needs to write some kind of copy_tree -function)
 
-  * Make the icon-selector dialog, that would show preferred icons
-    (maybe using freedesktop's specs to find them?) and also all found icons in paths.
-    I think the "all icons" could be sorted so that the ones that could be correct are
-    first in the list. Like fbgm does the search...
+* Fix the drag 'n' drop so that dropping over items (anything but submenu or begin)
+  wouldn't be possible (needs to write some kind of copy_tree -function)
 
-  * Do the configuration-dialog and make it possible to save it and load on program start.
-    What could be good solution? Maybe some xml in ~/.fluxbox ? or a plain text-file.
+* Menu and submenu sorting (by name?)
 
-  * Menu and submenu sorting (by name?)
-   (* Separator to show up as a line instead of blank  <= I tried the treeview's separator,
-   it is no good because it cannot be selected. All separators would then be very static.
-   I'll stay with current "----" unless someone suggests anything better.)
+* Icons next to name in treeview.
 
-  * Icons next to name in treeview.
+* Maybe a little smarter default menu on File -> New. Like the default menu on fluxbox.
+
+* A context menu for right mouse button on treeview, to show things like "delete" and "add->exec"?
+  It should also have items like "Recursive visible" and "recursive hide", better names though
+
+* Maybe some list similar to denu's showing all installed programs (freedesktop?) allowing faster
+  selection of programs and their icons etc, but still that select-a-file-by-hand should be there 
+  like it is now.                            
+
+* Buttons for duplicating an entry and also for moving an entry up and down. Cut'n'paste? Also
+  external drag and drop from f.e. filemanager could be cool.
 """
 import sys
 
@@ -144,7 +146,7 @@ possibleItemTypes = [['exec', 'exec: Application', 0, 0xFF],
                      ['restart', 'restart: Restart WM', 0, 0xFF],
                      ['config', 'config: Configuration menu', 0, 0x0D],
                      ['commanddialog', 'commanddialog: Internal command', 0, 0x0D],
-                     ['wallpaper', 'wallpaper: Wallpaper menu', 3, 0xFF],
+                     ['wallpapers', 'wallpapers: Wallpaper list', 4, 0x05],
                      ['workspaces', 'workspaces: List of workspaces', 0, 0x05],
                      ['begin', 'begin: Beginning of the menu (static)', 1, 0x01],
                      ['submenu', 'submenu: Submenu (static)', 2, 0xB],
@@ -171,7 +173,7 @@ iconPaths = ['/usr/share/icons/',\
 externalGenerator = 'fluxbox-generate_menu'
 generatedFile = '~/.fluxbox/menu'
 
-settingsFile = '~/.fluxbox/fluxMenu'
+settingsFile = '~/.fluxbox/fluxMenu.rc'
 
 
 class fluxMenu:
@@ -201,6 +203,7 @@ class fluxMenu:
         self.iconIcon = self.wTree.get_widget("icon")
         self.commandLabel = self.wTree.get_widget("commandlabel")
         self.errorLabel = self.wTree.get_widget("errorlabel")
+        self.iconSelectorButton = self.wTree.get_widget("showiconselector")
         self.tooltips = gtk.Tooltips()
 
         self.__enable_fields__(0x00)
@@ -263,8 +266,8 @@ class fluxMenu:
         if menu:
             if saveOriginal:
                 if handleMenu.backup_menu(self.menuFile, '.original', overwriteOriginal) == 0:
-                    warning = gtk.MessageDialog(dialog, 0, gtk.MESSAGE_WARNING,
-                                            gtk.BUTTONS_OK, "Could not save original menu to menu.original!")
+                    warning = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_WARNING,
+                                            gtk.BUTTONS_OK, "Could not save original menu to menu.original!\r\nProbably permission problem, do you have write access?")
                     warning.run()
                     warning.destroy()
 
@@ -279,8 +282,9 @@ class fluxMenu:
 
         # Create iconselector and load icons into it
         self.iconselector = iconSelector(self.icon_selected)
-        for path in iconPaths:
-            self.iconselector.load_icons(path, True, False)
+        if useIcons:
+            for path in iconPaths:
+                self.iconselector.load_icons(path, True, useOnlyXpm)
 
         return
 
@@ -453,8 +457,8 @@ class fluxMenu:
             # Save a backup if it is enabled
             if saveBackup: 
                 if handleMenu.backup_menu(self.menuFile, '.bck', True) != 1:
-                    warning = gtk.MessageDialog(dialog, 0, gtk.MESSAGE_WARNING,
-                                            gtk.BUTTONS_OK, "Could not save backup to " + self.menuFile + ".bck!")
+                    warning = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_WARNING,
+                                            gtk.BUTTONS_OK, "Could not save backup to " + self.menuFile + ".bck!\r\nProbably permission problem, do you have write access?")
                     warning.run()
                     warning.destroy()
 
@@ -482,7 +486,7 @@ class fluxMenu:
             answer = None
 
             if isAlready:
-                message = gtk.MessageDialog(dialog, 0, gtk.MESSAGE_QUESTION, 
+                message = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_QUESTION, 
                                             gtk.BUTTONS_YES_NO, "File %s exists. Overwrite?" %menufile)
                 answer = message.run()
                 message.destroy()
@@ -596,17 +600,13 @@ class fluxMenu:
 
 
     def __icon_clicked__(self,widget):
-#	iconselector = selectIcon(useOnlyXpm)
-#        while not iconselector.ready_to_close():
-#            iconselector.ready_to_close()
 
-#        windowname2 = "dialog1"
-#        gladefile = programPath + "fluxMenu.glade"
-#        self.wTree2 = gtk.glade.XML(gladefile, windowname2)
+        if not hasattr (self, 'prevIconPath'):
+            self.prevIconPath = os.path.abspath(os.path.dirname(sys.argv[0])) + '/' + 'pixmaps'
 
         filter = gtk.FileFilter()
 
-        dialogTitle = "Choose an icon (temporary selector)..."
+        dialogTitle = "Choose an icon..."
         dialogType = gtk.FILE_CHOOSER_ACTION_OPEN
 
         dialog = gtk.FileChooserDialog(dialogTitle,
@@ -614,6 +614,7 @@ class fluxMenu:
                                         (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dialog.set_default_response(gtk.RESPONSE_OK)
+        dialog.set_filename(self.prevIconPath)
 
         filter.add_pattern("*.xpm")
         if not useOnlyXpm:
@@ -625,19 +626,20 @@ class fluxMenu:
 
         response = dialog.run()
         if response == gtk.RESPONSE_OK:
-
-        # got an icon, proceed to attach it
-#        iconFile = iconselector.selected_icon()
+            # got an icon, proceed to attach it
             iconFile = dialog.get_filename()
             if iconFile and iconFile != "":
                 self.iconIcon.set_from_file(iconFile)
                 self.tooltips.set_tip(self.iconButton, iconFile)
+
                 treeselection = self.treeview.get_selection()
                 (model, iter) = treeselection.get_selected()
+
                 model.set_value(iter, 2, iconFile)
-#                print model.get_value(iter, 2)
+                self.prevIconPath = os.path.abspath(iconFile)
 
                 dialog.destroy()
+
         elif response == gtk.RESPONSE_CANCEL:
             #print 'Closed, no files selected'
             dialog.destroy()
@@ -718,8 +720,8 @@ class fluxMenu:
             if backupfine == 1:
                 generated = os.system(expanduser(externalGenerator))
             else:
-                warning = gtk.MessageDialog(dialog, 0, gtk.MESSAGE_WARNING,
-                                        gtk.BUTTONS_OK, "Saving backup failed so menu was not generated!\r\n")
+                warning = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_WARNING,
+                                        gtk.BUTTONS_OK, "Saving backup failed so menu was not generated!\r\nProbably a permission problem, do you have write access?")
                 warning.run()
                 warning.destroy()
 
@@ -881,10 +883,12 @@ class fluxMenu:
 
         self.iconButton.set_sensitive(fields & 0x08)
         self.clearIconButton.set_sensitive(fields & 0x08)
+        self.iconSelectorButton.set_sensitive(fields & 0x08)
 
         if not useIcons:
             self.iconButton.set_sensitive(False)
             self.clearIconButton.set_sensitive(False)
+            self.iconSelectorButton.set_sensitive(False)
 
         return
 
@@ -960,7 +964,15 @@ class fluxMenu:
 
     def icon_selected(self):
         icon = self.iconselector.get_icon()
-        if icon: pass
+        if icon:
+            treeselection = self.treeview.get_selection()
+            if treeselection:
+                (model, iter) = treeselection.get_selected()
+                if iter:
+                    self.iconIcon.set_from_file(icon)
+                    self.tooltips.set_tip(self.iconButton, icon)
+                    model.set_value(iter, 2, icon)
+
             # Do something wise here :P
 #        print "JO"
         return
@@ -1096,8 +1108,9 @@ class fluxMenu:
 
         # Add new paths into iconselector
         self.iconselector.clear_icons()
-        for path in iconPaths:
-            self.iconselector.load_icons(path, True, False)
+        if useIcons:
+            for path in iconPaths:
+                self.iconselector.load_icons(path, True, useOnlyXpm)
 
         return
 

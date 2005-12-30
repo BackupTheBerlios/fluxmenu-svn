@@ -20,7 +20,10 @@ def read_menu(menufile):
     if isfile(menufile):
 
         # Read menu contents
-        cFile = open(menufile, "r")
+        try:
+            cFile = open(menufile, "r")
+        except:
+            return None
         if not cFile: return None
         menuContents = cFile.readlines()
         cFile.close()
@@ -87,7 +90,10 @@ def save_menu(menu, filename, overwrite, useIcons):
 
     if not isfile(filename): return 0
 
-    cFile = open(filename, "w")
+    try:
+        cFile = open(filename, "w")
+    except:
+        return 0
 
     intendation = 0
 

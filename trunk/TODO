@@ -4,11 +4,6 @@ TODO:
 * Fix the drag 'n' drop so that dropping over items (anything but submenu or begin)
   wouldn't be possible (needs to write some kind of copy_tree -function)
 
-* Make the icon-selector dialog, that would show preferred icons
-  (maybe using freedesktop's specs to find them?) and also all found icons in paths.
-  I think the "all icons" could be sorted so that the ones that could be correct are
-  first in the list. Like fbgm does the search...
-
 * Menu and submenu sorting (by name?)
 
 * Icons next to name in treeview.
@@ -20,7 +15,7 @@ TODO:
 
 * Maybe some list similar to denu's showing all installed programs (freedesktop?) allowing faster
   selection of programs and their icons etc, but still that select-a-file-by-hand should be there 
-  like it is now. I find it very intuitive...
+  like it is now.
 
 * Buttons for duplicating an entry and also for moving an entry up and down. Cut'n'paste? Also
   external drag and drop from f.e. filemanager could be cool.
