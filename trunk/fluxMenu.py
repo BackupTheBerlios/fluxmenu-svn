@@ -189,7 +189,7 @@ class fluxMenu:
         windowname="window1"
         self.wTree=gtk.glade.XML (gladefile,windowname)
         #self.set_geometry_hints(min_width = 300)
-
+ 
         self.window = self.wTree.get_widget("window1")
         self.typeBox = self.wTree.get_widget("typebox")
         self.typeLabel = self.wTree.get_widget("typelabel")
@@ -214,6 +214,10 @@ class fluxMenu:
         #self.wTree.get_widget("generatebutton").set_sensitive(False)
         self.wTree.get_widget("sortbutton").set_sensitive(False)
 
+        self.pmenu=gtk.glade.XML(gladefile, "popupmenu")
+        self.popupMenu=self.pmenu.get_widget("popupmenu")
+        self.openthis=self.pmenu.get_widget("open_this_file1")
+        self.openthis.set_sensitive(False)
 
         handler = {"on_save1_activate":self.__save_clicked__,
                    "on_save_as1_activate":self.__save_as_clicked__,
@@ -235,8 +239,17 @@ class fluxMenu:
                    "on_showiconselector_clicked":self.__iconselector_clicked__,
                    "on_clearicon_clicked":self.__clearicon_clicked__,
  
+                   "on_include1_activate":self.__include_clicked__,
+                   "on_duplicate1_activate":self.__duplicate_clicked__,
+                   "on_insert1_activate":self.__insert_clicked__,
+                   "on_show1_activate":self.__show_clicked__,
+                   "on_show_all1_activate":self.__showall_clicked__,
+                   "on_hide1_activate":self.__hide_clicked__,
+                   "on_open_this_activate":self.__open_selected__,
+
                    "on_typebox_changed":self.__typebox_changed__,
                    "on_treeview1_cursor_changed":self.__treeview_changed__,
+                   "on_treeview1_popup_menu":self.__treeview_menu__,
                    "on_info_changed":self.__info_changed__,
                    "on_about1_activate":self.__about1_activate__,
                    "on_quit1_activate":(gtk.main_quit),
@@ -244,6 +257,7 @@ class fluxMenu:
                    "on_window1_destroy":(gtk.main_quit)}
         
         self.wTree.signal_autoconnect (handler)
+        self.pmenu.signal_autoconnect (handler)
 
 
         # Prepare the "type" -combobox for use
@@ -302,7 +316,6 @@ class fluxMenu:
         global deleteBackup
         global useIcons
         global useOnlyXpm
-        global generateExternal
         global externalGenerator
         global generatedFile
         global iconPaths
@@ -367,10 +380,15 @@ class fluxMenu:
         iter = None
         beginhasbeen = False
 
+        if not menu:
+            print "Hazardous error: No menu to load!"
+            return
+
         for item in menu:
             if(item[0].lower() == 'begin'):
-                iter = self.__insert_row__(model, None, item[1], item[2], item[3], item[0], item[4])
-                beginhasbeen = True
+                if not beginhasbeen:
+                    iter = self.__insert_row__(model, None, item[1], item[2], item[3], item[0], item[4])
+                    beginhasbeen = True
             elif(item[0].lower() == 'submenu'):
                 if not iter: break
                 iter = self.__insert_row__(model, iter, item[1], item[2], item[3], item[0], item[4])
@@ -423,6 +441,8 @@ class fluxMenu:
                                         (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dialog.set_default_response(gtk.RESPONSE_OK)
+        if self.menuFile:
+            dialog.set_filename(self.menuFile)
 
         filter = gtk.FileFilter()
         filter.set_name("Fluxbox menu")
@@ -446,6 +466,20 @@ class fluxMenu:
             #print 'Closed, no files selected'
             dialog.destroy()
 
+        return
+
+
+    def __open_selected__(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+
+        type = model.get_value(iter, 3)
+        if type == "include":
+            self.menuFile = expanduser(model.get_value(iter, 0))
+            self.treeview.get_model().clear()
+            menu = handleMenu.read_menu(self.menuFile)
+            self.__fill_treeview__(menu)
+            self.window.set_title(self.menuFile + ' - ' + windowTitle)
         return
 
 
@@ -520,6 +554,61 @@ class fluxMenu:
             message.run()
             message.destroy()
      
+        return
+
+    def __include_clicked__(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        dialog = gtk.FileChooserDialog("Select menu to include...",
+                                        self.window ,gtk.FILE_CHOOSER_ACTION_OPEN,
+                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dialog.set_default_response(gtk.RESPONSE_OK)
+        if self.menuFile:
+            dialog.set_filename(self.menuFile)
+
+        filter = gtk.FileFilter()
+        filter.set_name("Fluxbox menu")
+        filter.add_pattern("menu")
+        dialog.add_filter(filter)
+
+        filter2 = gtk.FileFilter()
+        filter2.set_name("All Files")
+        filter2.add_pattern("*")
+        dialog.add_filter(filter2)
+
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            self.__insert_row__(model, iter, dialog.get_filename(), "", "", "include", True)
+        dialog.destroy()
+
+        return
+
+    def __duplicate_clicked__(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        return
+
+    def __insert_clicked__(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        return
+
+    def __show_clicked__(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        model.set_value(iter, 5, True)
+        return
+
+    def __showall_clicked__(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        return
+
+    def __hide_clicked__(self, widget):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        model.set_value(iter, 5, False)
         return
 
 
@@ -705,7 +794,7 @@ class fluxMenu:
 
     def __generatebutton_clicked__(self, widget):
         confirm = gtk.MessageDialog(self.window, gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_MODAL,
-                                    gtk.MESSAGE_WARNING, gtk.BUTTONS_YES_NO, "Are you sure you want to generate a new menu?\r\nWARNING! All modifications after last save will be lost!")
+                                    gtk.MESSAGE_WARNING, gtk.BUTTONS_YES_NO, "Are you sure you want to generate a new menu?\r\nWARNING! All modifications after last save will be lost!\r\n\r\nThe file that will be generated is " + generatedFile)
         reallygenerate = confirm.run()
         confirm.destroy()
 
@@ -735,6 +824,7 @@ class fluxMenu:
                 self.treeview.get_model().clear()
                 menu = handleMenu.read_menu(expanduser(generatedFile))
                 self.__fill_treeview__(menu)
+                self.window.set_title(self.menuFile + ' - ' + windowTitle)
 
         return
 
@@ -829,6 +919,12 @@ class fluxMenu:
                 if type == 'begin': self.__enable_toolbar__(True, False)
                 else: self.__enable_toolbar__(True, True)
 
+                # If selected item is "include", enable the "open this menu" in context
+                if type == "include":
+                    self.openthis.set_sensitive(True)
+                else:
+                    self.openthis.set_sensitive(False)
+
         return
 
 
@@ -837,12 +933,30 @@ class fluxMenu:
 
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
+
+        if not iter or not model:
+            return
+
         if widget == self.commandEntry:
             model.set_value(iter, 1, self.commandEntry.get_text())
         elif widget == self.nameEntry:
             model.set_value(iter, 0, self.nameEntry.get_text())
 
         return
+
+    def __treeview_menu__(self, widget, event):
+        if event.button == 3:
+            (press_x, press_y) = event.get_coords()
+            press_time = event.get_time()
+            
+#            context_menu = self.__create_context_menu__()
+#            if not context_menu: return
+#            context_menu.popup(None, None, None, 3, press_time)
+
+            self.popupMenu.popup(None, None, None, 3, press_time)
+
+        return
+
 
     def __visible_toggled__(self,widget, path, model):
         self.treemodel[path][4] = not self.treemodel[path][4]
@@ -899,6 +1013,25 @@ class fluxMenu:
         self.wTree.get_widget("itembutton").set_sensitive(enable_add)
         self.wTree.get_widget("separatorbutton").set_sensitive(enable_add)
         return
+
+
+    def __create_context_menu__(self):
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+
+        if not iter or not model:
+            return
+
+        type = model.get_value(iter, 3)
+        print type
+
+        c_menu = gtk.Menu()
+        pask = gtk.MenuItem("_Blub")
+        c_menu.attach(gtk.MenuItem("_Testi"), 0, 1, 0, 1)
+        c_menu.attach(gtk.MenuItem("Testi_2"), 1, 2, 1, 2)
+        c_menu.attach(pask, 2,3,2,3)
+
+        return c_menu
 
 
     # Serialize the menu from treeview to table

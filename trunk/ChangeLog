@@ -1,5 +1,11 @@
 (Format: Day.Month.Year)
-Changes for revision 27:
+Changes for rebision 29:
+*15.04.2006
+  * Started making a context menu for easier access
+    to complex things, still under work.
+    fluxMenu.py fluxMenu.glade
+------------------------
+Changes for revision 28:
 *30.12.2005
   * The dialog for selecting icon from file now remembers
     the file/path that was last selected. This makes

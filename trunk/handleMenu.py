@@ -63,7 +63,8 @@ def read_menu(menufile):
 #                print itemName
                 menu.append([itemType.lower(), itemName, itemCommand, itemIcon, not isComment])
 
-    return menu
+        return menu
+    return None
 
 
 # save_menu: Saves a menu into fluxbox's format
