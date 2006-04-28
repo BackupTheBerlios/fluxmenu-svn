@@ -1,0 +1,23 @@
+TODO:
+
+
+* Fix the drag 'n' drop so that dropping over items (anything but submenu or begin)
+  wouldn't be possible (needs to write some kind of copy_tree -function)
+
+* Menu and submenu sorting (by name?)
+
+* Icons next to name in treeview.
+
+* Maybe a little smarter default menu on File -> New. Like the default menu on fluxbox.
+
+* A context menu for right mouse button on treeview, to show things like "delete" and "add->exec"?
+  It should also have items like "Recursive visible" and "recursive hide", better names though
+
+* Maybe some list similar to denu's showing all installed programs (freedesktop?) allowing faster
+  selection of programs and their icons etc, but still that select-a-file-by-hand should be there 
+  like it is now.
+
+* Buttons for duplicating an entry and also for moving an entry up and down. Cut'n'paste? Also
+  external drag and drop from f.e. filemanager could be cool.
+
+* Bugfixes :D

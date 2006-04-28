@@ -1,0 +1,54 @@
+--- handleMenu.py	2005-11-01 08:38:53.710279264 -0600
++++ /home/errr/fluxmenu/handleMenu.py	2005-11-01 08:37:10.695939824 -0600
+@@ -11,6 +11,12 @@
+ #       characters [, ], {, }, (, ), <, or >
+ 
+ def read_menu(menufile):
++    """Parses a fluxbox's menu-file 
++    Input: menufile = string pointing to the menu, MUST be absolute
++    Output: table containing the menu, 4 fields:
++        [type] [name] [command] [icon] [is-this-line-a-comment]
++    BUGS: Possibly parse failure if command, type or something contains
++        characters [, ], {, }, (, ), <, or >"""
+     if isfile(menufile):
+ 
+         # Read menu contents
+@@ -68,6 +74,14 @@
+ #         2 if file exists and overwrite is False
+ 
+ def save_menu(menu, filename, overwrite, useIcons):
++    """save_menu: Saves a menu into fluxbox's format
++    Input: menu = a 4 column table containing the menu
++        NOTE: end-tag _MUST_ be inserted before calling this
++    filename = filename where to save
++    overwrite = if an existing menu should be overwritten (bool)
++    Output: 0 on general error
++        1 if succesfull
++        2 if file exists and overwrite is False"""
+ 
+     if isfile(filename) and not overwrite: return 2
+ 
+@@ -122,6 +136,14 @@
+ #         2 if there aleady is a file and overwrite is false
+ 
+ def backup_menu(menufile, extension, overwrite):
++    """backup_menu: copies menufile into the same dir with different extension (.bck or .original f.e.)
++    Input: menufile = path to original file
++        extension = extension to add to the backup
++        overwrite = overwrite if there is already a file with same name (boolean)
++    Output: 0 on general error
++         1 if everything was succesfull
++         2 if there aleady is a file and overwrite is false"""
++    
+     if not isfile(menufile): return 0
+ 
+     if overwrite:
+@@ -148,6 +170,8 @@
+ # Example: get_item("[menu] (foobar)", '(', ')') => foobar
+ 
+ def get_item(line, startchar, endchar):
++    """get_item: Returns everything between two characters in a string
++    Example: get_item("[menu] (foobar)", '(', ')') => foobar"""
+     lineLen = len(line)
+     if lineLen < 0: return ''
+ 

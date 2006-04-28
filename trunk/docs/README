@@ -1,0 +1,44 @@
+To install this run the setup.py script as root:
+
+chmod +x setup.py
+./setup.py install
+
+It will place the main fluxMenu executable in /usr/bin 
+It will also make a dir in /usr/share/fluxmenu-1.0 for all the 
+files that fluxmenu uses. fluxmenu depends on libglade, and pygtk 2.4 or newer
+2.6+ is reccomended. 
+
+If you have any problems using this app please feel free to let me know how I can make
+it eaiser to use. email: 
+or see me in IRC on chat.freenode.net in #fluxbox. 
+Removal of this app is not exactly simple as root: 
+
+  rm -rf /usr/share/fluxmenu-1.0
+  rm -rf /usr/bin/fluxMenu
+  rm -rf /usr/lib/python(your version)/site-packages/fluxmenu/
+
+and it will be gone.
+###################################################################
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Common problems after install
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+###################################################################
+
+Sometimes people have said they have premission problems after installing
+this is because of your umask. To solve the problem make sure all the
+files installed by fluxmenu are world readable: chmod a+r 
+Next the fluxMenu binary in /usr/bin will need to be: chmod a+rx 
+
+###################################################################
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+A test run of the install can be done as a user by running:
+
+python setup.py --dry-run install
+
+This will show you what is going to happen if you actually run the 
+install as root.
+
+Packages can also be made with the setup.py file. For more info on 
+how to do that see: http://docs.python.org/dist/dist.html
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+###################################################################
