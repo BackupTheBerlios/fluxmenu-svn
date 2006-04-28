@@ -2,6 +2,8 @@
 # Copyright 2005 Lauri Peltonen
 # zan@mail.berlios.de
 # This is fluxMenu that is based on fluxStyle because I don't know any python
+
+
 """FluxMenu
 A class wrapper for working with and editing the fluxbox menu
 
@@ -31,53 +33,15 @@ TODO:
 * Buttons for duplicating an entry and also for moving an entry up and down. Cut'n'paste? Also
   external drag and drop from f.e. filemanager could be cool.
 """
+
 import sys
-
-try:
-    import gtk
-except:
-    from Tkinter import *
-    # set up the window itself
-    top = Tk()
-    message = Frame(top)
-    message.master.title("fluxMenu Error")
-    message.pack()
-    error = """You do not have pyGTK installed\n\
-please vist http://pygtk.org/ and install\nat least 2.4, \
-and for best results get 2.6 or newer."""
-    # add the widgets
-    lMessage = Label(message, text = error)
-    lMessage.pack()
-    qButton = Button(message, text = "OK", command = message.quit)
-    qButton.pack()
-    # set the loop running
-    top.mainloop()
-    raise SystemExit
-
-try:
-    import gtk.glade
-except:
-    ver = sys.version[:5]
-    message = """
-You need to install libglade2\n\
-http://ftp.gnome.org/pub/GNOME/sources/libglade/2.0/\n\
-or set your PYTHONPATH correctly.\n\
-try: export PYTHONPATH=/usr/local/lib/python%s/site-packages/\n\
-or export PYTHONPATH=/usr/lib/python%s/site-packages/""" % (ver,ver)
-    m = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, \
-    gtk.BUTTONS_NONE, message)
-    m.add_button(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
-    response = m.run()
-    m.hide()
-    if response == gtk.RESPONSE_CLOSE:
-        m.destroy()
-    raise SystemExit
+import gtk
+import gtk.glade
 
 if gtk.pygtk_version < (2,3,90):
     #we do have gtk so lets tell them via gui that they need to update pygtk
     #maybe we should add a 'would you like to open a browser to pygtk.org ??
-    message = """PyGtk 2.3.90 or later required for this program\n\
-it is reccomended that you get pygtk 2.6 or newer\nfor best results."""
+    message = """PyGtk 2.3.90 or later required for this program it is reccomended that you get pygtk 2.6 or newer for best results."""
     m = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, \
            gtk.BUTTONS_NONE, message)
     m.add_button(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
@@ -86,18 +50,13 @@ it is reccomended that you get pygtk 2.6 or newer\nfor best results."""
     if response == gtk.RESPONSE_CLOSE:
         m.destroy()
         raise SystemExit
-                                                                         
 
 import os
 import gobject
 import time
 from os.path import isfile,expanduser
-
-import handleMenu
-import findIcons
-import parseConfig
-
-from iconSelector import iconSelector
+from fluxmenu import handleMenu,findIcons,parseConfig
+from fluxmenu.iconSelector import iconSelector
 
 #import preferences
 #import selectIcon
@@ -107,6 +66,7 @@ from iconSelector import iconSelector
 #Also, we know we are running GTK v2
 
 programPath = os.path.abspath(os.path.dirname(sys.argv[0])) + '/'
+gladefile = programPath + "glade/fluxMenu.glade"
 
 windowTitle = 'Fluxbox menu editor'
 
@@ -176,6 +136,7 @@ generatedFile = '~/.fluxbox/menu'
 settingsFile = '~/.fluxbox/fluxMenu.rc'
 
 
+
 class fluxMenu:
     
     def main(self):
@@ -185,7 +146,6 @@ class fluxMenu:
 
         """The main fluxMenu window will show"""
         
-        gladefile=programPath + "fluxMenu.glade"
         windowname="window1"
         self.wTree=gtk.glade.XML (gladefile,windowname)
         #self.set_geometry_hints(min_width = 300)
@@ -217,6 +177,9 @@ class fluxMenu:
         self.pmenu=gtk.glade.XML(gladefile, "popupmenu")
         self.popupMenu=self.pmenu.get_widget("popupmenu")
         self.openthis=self.pmenu.get_widget("open_this_file1")
+        self.showall=self.pmenu.get_widget("show_all1")
+        self.show=self.pmenu.get_widget("show1")
+        self.hide=self.pmenu.get_widget("hide1")
         self.openthis.set_sensitive(False)
 
         handler = {"on_save1_activate":self.__save_clicked__,
@@ -295,7 +258,7 @@ class fluxMenu:
         self.__load_config__(expanduser(settingsFile))
 
         # Create iconselector and load icons into it
-        self.iconselector = iconSelector(self.icon_selected)
+        self.iconselector = iconSelector.iconSelector(self.icon_selected)
         if useIcons:
             for path in iconPaths:
                 self.iconselector.load_icons(path, True, useOnlyXpm)
@@ -597,18 +560,19 @@ class fluxMenu:
     def __show_clicked__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
-        model.set_value(iter, 5, True)
+        model.set_value(iter, 4, True)
         return
 
     def __showall_clicked__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
+        (model, iter_child) = treeselection.get_selected()
         return
 
     def __hide_clicked__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
-        model.set_value(iter, 5, False)
+        model.set_value(iter, 4, False)
         return
 
 
@@ -888,6 +852,7 @@ class fluxMenu:
 
         # The type is a little bit harder
         type = model.get_value(iter, 3)
+        visible = model.get_value(iter, 4)
         for itemType in possibleItemTypes:
             if itemType[0].lower() == type:
 
@@ -911,7 +876,6 @@ class fluxMenu:
                 if iconFile:
                     self.iconIcon.set_from_file(iconFile)
                     self.tooltips.set_tip(self.iconButton, iconFile)
-
                 else:
                     self.iconIcon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
 
@@ -924,6 +888,20 @@ class fluxMenu:
                     self.openthis.set_sensitive(True)
                 else:
                     self.openthis.set_sensitive(False)
+
+                # Submenu shows the "show all" menuitem
+                if type == "submenu":
+                    self.showall.set_sensitive(True)
+                else:
+                    self.showall.set_sensitive(False)
+
+                if visible == True:
+                    self.show.set_sensitive(False)
+                    self.hide.set_sensitive(True)
+                else:
+                    self.show.set_sensitive(True)
+                    self.hide.set_sensitive(False)
+
 
         return
 
@@ -966,7 +944,6 @@ class fluxMenu:
         #for the logo to show when its complete you need to edit the fluxMenu.glade
         #file manually and add the full path of where the icon will be installed.
         windowname2="aboutdialog1"
-        gladefile=programPath + "fluxMenu.glade"
         self.wTree2=gtk.glade.XML (gladefile,windowname2)
 
     def __change_labels__(self, nameIndex):
@@ -1115,7 +1092,6 @@ class fluxMenu:
 # Other dialogs here, maybe they could be in separate file?
 # Could they still use those global variables?
     def __preferences_dialog__(self, widget):
-        gladefile = programPath + "fluxMenu.glade"
         window2 = "preferences"
         self.wTree2 = gtk.glade.XML(gladefile, window2)
 
