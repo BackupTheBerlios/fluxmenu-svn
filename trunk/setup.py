@@ -68,7 +68,7 @@ setup(name='fluxmenu',
 	  license = 'http://www.gnu.org/copyleft/gpl.html',
 	  packages=['fluxmenu','fluxmenu/iconSelector'],
 	  data_files=[('/usr/share/fluxmenu-1.0/pixmaps',
-		  ['pixmaps/mini-fluxbox5.png']),
+		  ['glade/pixmaps/mini-fluxbox5.png']),
 	      ('/usr/share/fluxmenu-1.0/glade',['glade/fluxMenu.glade']),
 		  ('/usr/share/fluxmenu-1.0/docs',['docs/ChangeLog','docs/TODO'])]
 	 )

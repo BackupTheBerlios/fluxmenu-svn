@@ -89,9 +89,19 @@ Define a list of possible types of items
 Default types are: begin, end and submenu. They are handled automagically
 Others are items and are defined here.
 1st item is theone in menufile, 2nd is what is shown in combobox
-3rd is right pane's labels' texts, 4th is active (changeable) fields
+3rd is right pane's labels' texts, check itemInfoCaptions variable
+4th is active (changeable) fields
 Fields are: 0x01 = name, 0x02 = command, 0x04 = type and 0x08 = icon
 And 0 = not editable, 1 = editable
+More info:
+  0x01 = only name is editable
+  0x02 = only command is editable
+  0x03 (0x01 + 0x02) = both command and name are editable
+  0x04 = type can be changed
+  0x05 (0x01 + 0x04) = type can be changed and name is editable
+  0x06 (0x02 + 0x04) = type can be changed, command can be edited
+  0x07 (0x01 + 0x02 + 0x04) = type can be changed, name and command can be edited
+  etc etc
 """
 
 possibleItemTypes = [['exec', 'exec: Application', 0, 0xFF],
@@ -110,7 +120,7 @@ possibleItemTypes = [['exec', 'exec: Application', 0, 0xFF],
                      ['workspaces', 'workspaces: List of workspaces', 0, 0x05],
                      ['begin', 'begin: Beginning of the menu (static)', 1, 0x01],
                      ['submenu', 'submenu: Submenu (static)', 2, 0xB],
-                     ['comment', '#: Comment', 0, 0x00]]
+                     ['comment', '#: Comment', 0, 0x01]]
 
 defaultMenus = ['~/.fluxbox/menu',\
                 '/usr/local/share/fluxbox/menu',\
@@ -181,6 +191,7 @@ class fluxMenu:
         self.show=self.pmenu.get_widget("show1")
         self.hide=self.pmenu.get_widget("hide1")
         self.openthis.set_sensitive(False)
+        self.showall.set_sensitive(False)
 
         handler = {"on_save1_activate":self.__save_clicked__,
                    "on_save_as1_activate":self.__save_as_clicked__,
@@ -194,6 +205,7 @@ class fluxMenu:
                    "on_itembutton_clicked":self.__create_item__,
                    "on_separatorbutton_clicked":self.__create_separator__,
                    "on_generatebutton_clicked":self.__generatebutton_clicked__,
+                   "on_fill_icons1_clicked":self.__fill_icons__,
                    "on_preferencesbutton_clicked":self.__preferences_dialog__,
                    "on_preferences1_activate":self.__preferences_dialog__,
 
@@ -262,7 +274,6 @@ class fluxMenu:
         if useIcons:
             for path in iconPaths:
                 self.iconselector.load_icons(path, True, useOnlyXpm)
-
         return
 
 
@@ -345,6 +356,11 @@ class fluxMenu:
 
         if not menu:
             print "Hazardous error: No menu to load!"
+            warning = gtk.MessageDialog(self.window, 0, gtk.MESSAGE_WARNING,
+                                    gtk.BUTTONS_OK, "Menu file was empty or there was no proper menu, creating a default menu!")
+            warning.run()
+            warning.destroy()
+            self.__new_menu__(None)
             return
 
         for item in menu:
@@ -385,6 +401,7 @@ class fluxMenu:
 
         # Also it could be wise to create a very basic tree, begin and exit are enough ^^
         iter = self.__insert_row__(model, None, 'Fluxbox', '', '', 'begin', True)
+        self.__insert_row__(model, iter, 'xterm', 'xterm', '', 'exec', True)
         self.__insert_row__(model, iter, 'Exit fluxbox', '', '', 'exit', True)
 
         # Expand the menu
@@ -423,6 +440,7 @@ class fluxMenu:
             self.menuFile = dialog.get_filename()
             menu = handleMenu.read_menu(self.menuFile)
             self.__fill_treeview__(menu)
+            self.menuFile = dialog.get_filename()			# In case the menu was empty
             self.window.set_title(self.menuFile + ' - ' + windowTitle)
             dialog.destroy()
         else:
@@ -463,7 +481,8 @@ class fluxMenu:
             handleMenu.save_menu(menu, self.menuFile, True, useIcons)
         else:
             # Call save as -function to get the new filename
-            print 'No menu-file'
+            print 'No menu-file, calling save_as'
+            self.save_as_clicked(widget)
 
         return
 
@@ -547,6 +566,9 @@ class fluxMenu:
 
         return
 
+    def __fill_icons__(self, widget):
+        return
+
     def __duplicate_clicked__(self, widget):
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
@@ -590,7 +612,9 @@ class fluxMenu:
 
         # Check if last item of the menu was deleted
         # (shouldn't be possible, but)
-        if not model.get_iter('0'):
+        try:
+            model.get_iter('0')
+        except:
             self.menuFile = ''
         return
 
@@ -718,7 +742,7 @@ class fluxMenu:
 
         command = command.lower()
 
-        print command
+#        print command
 
         self.iconselector.dialog(command)
         return
@@ -1015,7 +1039,10 @@ class fluxMenu:
     def __serialize_menu__(self):
         treeselection = self.treeview.get_selection()
         model = self.treeview.get_model()
-        iter = model.get_iter('0')
+        try:
+            iter = model.get_iter('0')
+        except:
+            return []
 
         menu = []
 
@@ -1164,7 +1191,6 @@ class fluxMenu:
 
 
         iconPaths = []
-        
         iter = self.pathstore.get_iter('0')
         while iter:
             iconPaths.append(self.pathstore.get_value(iter, 0))
@@ -1205,7 +1231,7 @@ class fluxMenu:
         return
 
     def __xpm_toggled__(self, widget):
-        self.wTree2.get_widget("convertxpm").set_sensitive(self.wTree2.get_widget("checkbutton8").get_active())
+#        self.wTree2.get_widget("convertxpm").set_sensitive(self.wTree2.get_widget("checkbutton8").get_active())
         return
 
 

@@ -134,14 +134,14 @@ class iconSelector:
         matchline = self.match.get_text()
 
         if (len(matchline) > 0):
-            print matchline
+#            print matchline
             self.dialog(matchline)
         return
 
     def __icon_selected__(self, widget, path):
-        print path
+#        print path
         path = self.model.get_iter(path[0])
-        print self.model.get_value(path, 2)
+#        print self.model.get_value(path, 2)
         self.is_selected = True
         self.selected_icon = self.model.get_value(path, 2)
         self.__hide__()
