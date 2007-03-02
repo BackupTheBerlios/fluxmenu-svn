@@ -337,12 +337,16 @@ class fluxMenu:
         self.treeview.set_model(self.treemodel)
 
         renderer=gtk.CellRendererText()
+        rendererpb=gtk.CellRendererPixbuf()
         renderer2=gtk.CellRendererToggle()
         renderer2.set_property("activatable", True)
         renderer2.connect( 'toggled', self.__visible_toggled__, self.treemodel)
-        column=gtk.TreeViewColumn("Item", renderer, text=0)
-        column2=gtk.TreeViewColumn("Visible", renderer2, active=4)
+        column=gtk.TreeViewColumn("Item", rendererpb)
+        column.pack_start(renderer, True)
+        column.set_attributes(renderer, text=0)
+        column.set_cell_data_func(rendererpb, self.__column__make_pixbuf__)
         column.set_resizable(True)
+        column2=gtk.TreeViewColumn("Visible", renderer2, active=4)
         self.treeview.append_column(column)
         self.treeview.append_column(column2)
         self.treeview.set_expander_column(column)
@@ -393,6 +397,18 @@ class fluxMenu:
         return
     
 # Call backs begin here 
+
+    def __column__make_pixbuf__(self, column, cell, model, iter):
+        path = model.get_value(iter, 2)
+        if not useIcons: path = ''
+
+        try:
+          pb = gtk.gdk.pixbuf_new_from_file(path)
+          cell.set_property('pixbuf', pb)
+        except:
+          cell.set_property('pixbuf', None)
+        return
+
 
     def __new_menu__(self, widget):
         # Clear the treeview and that's it
@@ -567,6 +583,56 @@ class fluxMenu:
         return
 
     def __fill_icons__(self, widget):
+        model = self.treeview.get_model()
+        try:
+            iter = model.get_iter('0')
+        except:
+            return
+
+        serializeMenu = True
+        while serializeMenu:
+            itemType = model.get_value(iter, 3)
+
+            if itemType == 'exec' or itemType == 'submenu':
+                itemName = model.get_value(iter, 0)
+                itemCommand = model.get_value(iter, 1)
+            
+                icon = None
+                if itemCommand:
+                    itemCommand = itemCommand.split(' ')[0]
+                    icon = self.iconselector.find_icon(itemCommand)
+                if not icon:
+                    itemName = itemName.split(' ')[0]
+                    icon = self.iconselector.find_icon(itemName)
+                if icon:
+                    model.set_value(iter, 2, icon)
+
+            newIter = model.iter_children(iter)
+            if newIter:
+                iter = newIter
+            else:
+                newIter = model.iter_next(iter)
+                if newIter: iter = newIter
+                else:
+                    # This loop goes up the tree until it finds an item
+                    # with next_item or the tree ends.
+
+                    goUp = True
+                    while goUp:
+
+                        # Get the parent's iter
+                        # If there is no parent, end of menu has been reached
+                        newIter = model.iter_parent(iter)
+                        if not newIter:
+                            goUp = False
+                            serializeMenu = False
+                        else:
+                            # We do not want to parse same tree again
+                            # So if there is no next item, will continue going up
+                            if newIter: iter = model.iter_next(newIter)
+
+                        if iter: goUp = False
+                        else: iter = newIter
         return
 
     def __duplicate_clicked__(self, widget):
@@ -969,6 +1035,14 @@ class fluxMenu:
         #file manually and add the full path of where the icon will be installed.
         windowname2="aboutdialog1"
         self.wTree2=gtk.glade.XML (gladefile,windowname2)
+        self.aboutdialog = self.wTree2.get_widget("aboutdialog1")
+        handler = {"on_aboutdialog1_response":self.__close_about__}
+        self.wTree2.signal_autoconnect(handler)
+        
+    
+    def __close_about__(self,widget,event):
+        if event == gtk.RESPONSE_CANCEL:
+          self.aboutdialog.destroy()
 
     def __change_labels__(self, nameIndex):
         self.nameLabel.set_text(itemInfoCaptions[nameIndex][0])
@@ -1111,7 +1185,6 @@ class fluxMenu:
                     model.set_value(iter, 2, icon)
 
             # Do something wise here :P
-#        print "JO"
         return
 
 
@@ -1258,9 +1331,6 @@ class fluxMenu:
 
 # First thing would be to parse command line arguments
 # fluxMenu [-rc configfile] [menufile]
-
-# Then load settings from ~/.fluxbox/fluxMenu
-# ... load 'em ....
 
 # Launch the app
 if __name__ == "__main__":

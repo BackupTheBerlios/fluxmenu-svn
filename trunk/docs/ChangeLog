@@ -1,5 +1,17 @@
 (Format: Day.Month.Year)
-Changes for revision 34:
+------------------------
+Changes for revision 37:
+*02.03.2007
+  * Bug fixes on iconselector
+    fluxMenu.py fluxMenu.glade
+  * Fill icons menuitem that tries to add
+    icons to each submenu and exec in the menu.
+    fluxMenu.py iconSelector.py
+  * Added icons to the treeview, so the preview
+    of the menu is now more complete
+    fluxMenu.py
+------------------------
+Changes for revision 36:
 *25.06.2006
   * Little changes to which fields are editable
 *10.09.2006

@@ -31,7 +31,8 @@ class iconSelector:
         handler = {"on_iconselector_cancel_clicked": self.__cancel_clicked__,
                    "on_iconselector_find_clicked": self.__match_changed__,
                    "on_iconselector_item_activated": self.__icon_selected__,
-                   "on_iconselector_destroy": self.__cancel_clicked__ }
+#                   "on_iconselector_destroy": self.__delete__,
+                   "on_iconselector_delete": self.__delete__ }
 
         self.wTree.signal_autoconnect (handler)
 
@@ -110,6 +111,12 @@ class iconSelector:
             return self.selected_icon
         else: return None
 
+    def find_icon(self, searchword):
+        for icon in self.icons:
+            if icon[0].lower().find(searchword.lower()) >= 0:
+                return icon[0]
+        return None
+
 
     def __hide__(self):
         self.dialog_is_visible = False
@@ -121,6 +128,10 @@ class iconSelector:
         self.on_destroy()
         return
 
+    def __delete__(self, widget, what):
+        self.__cancel_clicked__(widget)
+        return False
+
     def __cancel_clicked__(self, widget):
         self.selected_icon = None
         self.is_selected = False
@@ -128,20 +139,17 @@ class iconSelector:
         self.__hide__()
        
         self.on_destroy()
-        return
+        return False
 
     def __match_changed__(self, widget):
         matchline = self.match.get_text()
 
         if (len(matchline) > 0):
-#            print matchline
             self.dialog(matchline)
         return
 
     def __icon_selected__(self, widget, path):
-#        print path
         path = self.model.get_iter(path[0])
-#        print self.model.get_value(path, 2)
         self.is_selected = True
         self.selected_icon = self.model.get_value(path, 2)
         self.__hide__()

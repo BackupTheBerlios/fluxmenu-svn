@@ -158,7 +158,6 @@
 		      <child>
 			<widget class="GtkMenuItem" id="fill_icons1">
 			  <property name="visible">True</property>
-			  <property name="sensitive">False</property>
 			  <property name="label" translatable="yes">Fill icons</property>
 			  <property name="use_underline">True</property>
 			  <signal name="activate" handler="on_fill_icons1_clicked" last_modification_time="Sun, 25 Jun 2006 10:47:41 GMT"/>
@@ -1018,6 +1017,7 @@ under the Creative Commons
 http://creativecommons.org/licenses/by-sa/2.0/</property>
   <property name="translator_credits" translatable="yes" comments="TRANSLATORS: Replace this string with your names, one name per line.">translator-credits</property>
   <property name="logo">mini-fluxbox5.png</property>
+  <signal name="response" handler="on_aboutdialog1_response" last_modification_time="Sat, 16 Dec 2006 19:37:25 GMT"/>
 </widget>
 
 <widget class="GtkWindow" id="preferences">
@@ -1825,6 +1825,8 @@ after generation:</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_MOUSE</property>
   <property name="modal">False</property>
+  <property name="default_width">220</property>
+  <property name="default_height">220</property>
   <property name="resizable">True</property>
   <property name="destroy_with_parent">True</property>
   <property name="role">iconSelector</property>
@@ -1835,8 +1837,9 @@ after generation:</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
   <property name="urgency_hint">False</property>
-  <signal name="destroy_event" handler="on_iconselector_destroy" last_modification_time="Fri, 18 Nov 2005 21:45:44 GMT"/>
   <signal name="leave_notify_event" handler="on_iconselector_focus_out" last_modification_time="Fri, 18 Nov 2005 22:06:47 GMT"/>
+  <signal name="destroy_event" handler="on_iconselector_cancel_clicked" last_modification_time="Fri, 02 Mar 2007 12:08:33 GMT"/>
+  <signal name="delete_event" handler="on_iconselector_delete" last_modification_time="Fri, 02 Mar 2007 12:38:41 GMT"/>
 
   <child>
     <widget class="GtkVBox" id="vbox22">
@@ -1861,6 +1864,7 @@ after generation:</property>
 	      <property name="has_frame">True</property>
 	      <property name="invisible_char">*</property>
 	      <property name="activates_default">False</property>
+	      <signal name="activate" handler="on_iconselector_find_clicked" last_modification_time="Fri, 02 Mar 2007 12:34:51 GMT"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>

@@ -6,8 +6,6 @@ TODO:
 
 * Menu and submenu sorting (by name?)
 
-* Icons next to name in treeview.
-
 * Maybe a little smarter default menu on File -> New. Like the default menu on fluxbox.
 
 * Maybe some list similar to denu's showing all installed programs (freedesktop?) allowing faster
