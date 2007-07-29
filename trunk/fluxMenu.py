@@ -19,8 +19,6 @@ TODO:
 
 * Menu and submenu sorting (by name?)
 
-* Icons next to name in treeview.
-
 * Maybe a little smarter default menu on File -> New. Like the default menu on fluxbox.
 
 * A context menu for right mouse button on treeview, to show things like "delete" and "add->exec"?
@@ -31,7 +29,7 @@ TODO:
   like it is now.                            
 
 * Buttons for duplicating an entry and also for moving an entry up and down. Cut'n'paste? Also
-  external drag and drop from f.e. filemanager could be cool.
+  external drag and drop from eg. filemanager could be cool.
 """
 
 import sys
@@ -273,7 +271,7 @@ class fluxMenu:
         self.iconselector = iconSelector.iconSelector(self.icon_selected)
         if useIcons:
             for path in iconPaths:
-                self.iconselector.load_icons(path, True, useOnlyXpm)
+                self.iconselector.load_icons(expanduser(path), True, useOnlyXpm)
         return
 
 

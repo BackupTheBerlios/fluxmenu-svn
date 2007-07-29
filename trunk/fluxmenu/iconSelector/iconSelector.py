@@ -130,7 +130,7 @@ class iconSelector:
 
     def __delete__(self, widget, what):
         self.__cancel_clicked__(widget)
-        return False
+        return True
 
     def __cancel_clicked__(self, widget):
         self.selected_icon = None

@@ -1,4 +1,12 @@
 (Format: Day.Month.Year)
+Changes for revision 38:
+*29.07.2007
+  * Fixed Delete key shortcut that
+    caused accidental deletion of items
+    fluxMenu.glade
+  * Improved iconSelector to handle home
+    directories (~)
+    fluxMenu.py
 ------------------------
 Changes for revision 37:
 *02.03.2007
